@@ -183,11 +183,19 @@ gap: 8px;
 position: relative;
 cursor: pointer;
 user-select: none;
+-webkit-tap-highlight-color: transparent;
+display: inline-flex;
 }
-.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip input {
+position: absolute;
+opacity: 0;
+width: 0;
+height: 0;
+pointer-events: none;
+}
 .chip span {
 display: inline-block;
-padding: 7px 13px;
+padding: 9px 14px;
 border: 1px solid var(–line);
 font-family: ‘JetBrains Mono’, monospace;
 font-size: 11px;
@@ -196,6 +204,7 @@ letter-spacing: 0.12em;
 background: transparent;
 color: var(–muted);
 transition: all 0.15s;
+pointer-events: none;
 }
 .chip input:checked + span {
 background: var(–ink);
@@ -203,6 +212,7 @@ color: var(–bg);
 border-color: var(–ink);
 }
 .chip:hover span { border-color: var(–accent); }
+.chip:active span { transform: scale(0.97); }
 
 .stage {
 background: var(–paper);
@@ -828,18 +838,24 @@ pointer-events: none;
 
   function updateReadout() {
     const m = currentMeta;
+    const fields = getEnabledFields();
     if (!m.hasAny) {
       readout.innerHTML = '<b>No EXIF found.</b> The photo will be framed without specs.';
       return;
     }
     const parts = [];
-    const brand = brandTitleCase(formatBrand(m.make, m.model));
-    if (brand) parts.push('<b>' + brand + '</b>');
-    if (m.focal) parts.push(Math.round(m.focal) + 'mm');
-    if (m.fNum) parts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
-    if (m.exposure) parts.push(formatShutter(m.exposure));
-    if (m.iso) parts.push('ISO ' + m.iso);
-    readout.innerHTML = parts.join('  ·  ');
+    if (fields.brand) {
+      const brand = brandTitleCase(formatBrand(m.make, m.model));
+      if (brand) parts.push('<b>' + brand + '</b>');
+    }
+    if (fields.lens && m.lens) parts.push(brandTitleCase(m.lens));
+    if (fields.focal && m.focal) parts.push(Math.round(m.focal) + 'mm');
+    if (fields.aperture && m.fNum) parts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
+    if (fields.shutter && m.exposure) parts.push(formatShutter(m.exposure));
+    if (fields.iso && m.iso) parts.push('ISO ' + m.iso);
+    if (fields.megapixels && m.megapixels) parts.push(m.megapixels.toFixed(1) + 'MP');
+    if (fields.resolution && m.width && m.height) parts.push(m.width + '×' + m.height);
+    readout.innerHTML = parts.length ? parts.join('  ·  ') : '<b>No fields selected.</b>';
   }
 })();
 </script>
