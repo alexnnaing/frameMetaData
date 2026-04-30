@@ -64,7 +64,7 @@
     min-height: 110px; display: flex; align-items: center; gap: 16px;
   }
   .drop:hover, .drop.over { background: #fff; border-color: var(--accent); }
-  .drop input { display: none; }
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .drop-icon {
     width: 56px; height: 56px; border: 1.5px solid var(--line);
     display: flex; align-items: center; justify-content: center;
@@ -285,6 +285,12 @@
   drop.addEventListener('drop', e => {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   });
+  drop.addEventListener('click', e => {
+    if (e.target !== fileInput) {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
   fileInput.addEventListener('change', e => {
     if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
   });
@@ -350,4 +356,58 @@
           URL.revokeObjectURL(url);
           tryBitmap();
         } else {
-          resolve({ image: img, cleanup: () => URL.​​​​​​​​​​​​​​​​
+          resolve({ image: img, cleanup: () => URL.revokeObjectURL(url) });
+        }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); tryBitmap(); };
+      img.src = url;
+      function tryBitmap() {
+        if (typeof createImageBitmap !== 'function') {
+          return reject(new Error('Browser cannot decode this image'));
+        }
+        createImageBitmap(blob)
+          .then(bmp => resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }))
+          .catch(err => reject(err));
+      }
+    });
+  }
+
+  async function parseExifSafe(file) {
+    if (typeof window.exifr === 'undefined') return {};
+    try {
+      const parsePromise = window.exifr.parse(file, {
+        tiff: true, exif: true, ifd0: true, gps: false, xmp: false, icc: false
+      });
+      const timeout = new Promise(resolve => setTimeout(() => resolve(null), 6000));
+      const result = await Promise.race([parsePromise, timeout]);
+      return result || {};
+    } catch (e) {
+      console.warn('EXIF parse failed:', e);
+      return {};
+    }
+  }
+
+  function isHeic(file) {
+    const name = (file.name || '').toLowerCase();
+    const type = (file.type || '').toLowerCase();
+    return name.endsWith('.heic') || name.endsWith('.heif') ||
+           type === 'image/heic' || type === 'image/heif';
+  }
+
+  async function handleFile(file) {
+    currentName = file.name || 'photo';
+    dropLabel.textContent = currentName.length > 38 ? currentName.slice(0, 35) + '...' : currentName;
+    showToast('Loading...');
+    const exifPromise = parseExifSafe(file);
+    let imageBlob = file;
+    if (isHeic(file)) {
+      showToast('Converting HEIC...');
+      try {
+        const heic2any = await window.__loadHeic2any();
+        const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+        imageBlob = Array.isArray(converted) ? converted[0] : converted;
+      } catch (err) {
+        console.error('HEIC conversion error:', err);
+        showToast('HEIC failed: ' + (err.message || 'unknown'));
+        return;
+      }​​​​​​​​​​​​​​​​
