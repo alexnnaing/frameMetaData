@@ -31,11 +31,9 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
-    background: var(--bg);
-    color: var(--ink);
+    background: var(--bg); color: var(--ink);
     font-family: 'Fraunces', Georgia, serif;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
+    min-height: 100vh; -webkit-font-smoothing: antialiased;
   }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 22px 80px; }
   header {
@@ -51,7 +49,7 @@
     font-family: 'JetBrains Mono', monospace; font-size: 11px;
     text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
   }
-  .controls { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 28px; }
+  .controls { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
   @media (min-width: 720px) { .controls { grid-template-columns: 2fr 1fr 1fr; } }
   .drop {
     position: relative; border: 1.5px dashed var(--line); background: var(--paper);
@@ -115,7 +113,7 @@
   .stage {
     background: var(--paper); border: 1px solid var(--line); padding: 28px;
     min-height: 320px; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 22px; position: relative;
+    margin-bottom: 22px; position: relative; scroll-margin-top: 20px;
   }
   .stage.empty { flex-direction: column; gap: 10px; color: var(--muted); }
   .stage canvas {
@@ -127,13 +125,6 @@
     font-family: 'JetBrains Mono', monospace; font-size: 11px;
     text-transform: uppercase; letter-spacing: 0.18em;
   }
-  #debug {
-    background: #111; color: #0f0; padding: 12px 16px; margin-bottom: 22px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    line-height: 1.7; white-space: pre-wrap; word-break: break-all;
-    max-height: 200px; overflow-y: auto;
-  }
-  #debug:empty { display: none; }
   .actions {
     display: flex; gap: 12px; flex-wrap: wrap;
     align-items: center; justify-content: space-between;
@@ -149,6 +140,7 @@
     border: 1px solid var(--line); background: var(--ink); color: var(--bg);
     cursor: pointer; transition: all 0.15s;
   }
+  button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.ghost { background: transparent; color: var(--ink); }
   footer {
@@ -157,6 +149,15 @@
     text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
     display: flex; justify-content: space-between;
   }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 12px 22px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -207,8 +208,6 @@
     </div>
   </div>
 
-  <div id="debug"></div>
-
   <div class="stage empty" id="stage">
     <div class="empty-mark">Your framed photo appears here</div>
     <div class="empty-sub">— upload to begin —</div>
@@ -230,26 +229,10 @@
   </footer>
 </div>
 
+<div class="toast" id="toast">Saved</div>
+
 <script>
 (function () {
-  const debugEl = document.getElementById('debug');
-  function log(msg) {
-    const time = new Date().toLocaleTimeString();
-    debugEl.textContent += '[' + time + '] ' + msg + '\n';
-    debugEl.scrollTop = debugEl.scrollHeight;
-    console.log('[FRAME]', msg);
-  }
-
-  window.addEventListener('error', e => {
-    log('JS ERROR: ' + (e.message || 'unknown') + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
-  });
-  window.addEventListener('unhandledrejection', e => {
-    log('PROMISE REJECTED: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
-  });
-
-  log('Script started');
-  log('exifr loaded: ' + (typeof window.exifr !== 'undefined'));
-
   const fileInput = document.getElementById('file');
   const drop = document.getElementById('drop');
   const dropLabel = document.getElementById('dropLabel');
@@ -260,6 +243,7 @@
   const readout = document.getElementById('readout');
   const downloadBtn = document.getElementById('download');
   const resetBtn = document.getElementById('reset');
+  const toast = document.getElementById('toast');
 
   let currentImage = null;
   let currentMeta = null;
@@ -267,12 +251,12 @@
 
   borderEl.addEventListener('input', () => {
     borderVal.textContent = borderEl.value + '%';
-    if (currentImage) render();
+    if (currentImage) render(false);
   });
-  aspectEl.addEventListener('change', () => { if (currentImage) render(); });
+  aspectEl.addEventListener('change', () => { if (currentImage) render(false); });
 
   document.querySelectorAll('#chips input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', () => { if (currentImage) render(); });
+    cb.addEventListener('change', () => { if (currentImage) render(false); });
   });
 
   function getEnabledFields() {
@@ -290,7 +274,6 @@
     drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); })
   );
   drop.addEventListener('drop', e => {
-    log('drop event fired');
     if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   });
   drop.addEventListener('click', e => {
@@ -300,14 +283,7 @@
     }
   });
   fileInput.addEventListener('change', e => {
-    log('change event fired, files: ' + (e.target.files ? e.target.files.length : 'null'));
-    if (e.target.files && e.target.files[0]) {
-      const f = e.target.files[0];
-      log('file: ' + f.name + ' / ' + f.type + ' / ' + f.size + ' bytes');
-      handleFile(f);
-    } else {
-      log('no file in change event');
-    }
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
   });
 
   resetBtn.addEventListener('click', () => {
@@ -320,20 +296,24 @@
     readout.innerHTML = '<b>No metadata yet.</b> Camera, lens, and exposure data appear once a photo is loaded.';
     downloadBtn.disabled = true;
     resetBtn.disabled = true;
-    debugEl.textContent = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   downloadBtn.addEventListener('click', async () => {
     if (!currentImage) return;
     downloadBtn.disabled = true;
-    log('rendering full size for download');
+    showToast('Rendering full size...');
     await new Promise(r => setTimeout(r, 50));
     try {
       const nativeMax = Math.max(currentImage.naturalWidth, currentImage.naturalHeight) * 1.2;
       const fullCanvas = renderToCanvas(Math.min(nativeMax, 8192));
       if (!fullCanvas) throw new Error('Render failed');
       fullCanvas.toBlob(blob => {
-        if (!blob) { log('toBlob returned null'); downloadBtn.disabled = false; return; }
+        if (!blob) {
+          showToast('Export failed — try smaller border');
+          downloadBtn.disabled = false;
+          return;
+        }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -342,59 +322,52 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        log('downloaded');
+        showToast('Downloaded');
         downloadBtn.disabled = false;
       }, 'image/jpeg', 0.95);
     } catch (err) {
-      log('download error: ' + err.message);
+      showToast('Export failed: ' + (err.message || 'unknown'));
       downloadBtn.disabled = false;
     }
   });
 
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1600);
+  }
+
   function loadImageFromBlob(blob) {
-    log('loadImageFromBlob, size=' + blob.size + ' type=' + blob.type);
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(blob);
-      log('object URL created');
       const img = new Image();
       img.onload = () => {
-        log('img.onload fired, naturalWidth=' + img.naturalWidth);
         if (img.naturalWidth === 0) { URL.revokeObjectURL(url); tryBitmap(); }
         else { resolve({ image: img, cleanup: () => URL.revokeObjectURL(url) }); }
       };
-      img.onerror = (e) => {
-        log('img.onerror fired');
-        URL.revokeObjectURL(url);
-        tryBitmap();
-      };
+      img.onerror = () => { URL.revokeObjectURL(url); tryBitmap(); };
       img.src = url;
       function tryBitmap() {
-        log('trying createImageBitmap fallback');
         if (typeof createImageBitmap !== 'function') {
-          log('createImageBitmap not available');
           return reject(new Error('Browser cannot decode this image'));
         }
         createImageBitmap(blob)
-          .then(bmp => { log('bitmap decoded ' + bmp.width + 'x' + bmp.height); resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }); })
-          .catch(err => { log('bitmap failed: ' + err.message); reject(err); });
+          .then(bmp => resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }))
+          .catch(err => reject(err));
       }
     });
   }
 
   async function parseExifSafe(file) {
-    if (typeof window.exifr === 'undefined') { log('exifr not loaded, skipping EXIF'); return {}; }
+    if (typeof window.exifr === 'undefined') return {};
     try {
       const parsePromise = window.exifr.parse(file, {
         tiff: true, exif: true, ifd0: true, gps: false, xmp: false, icc: false
       });
       const timeout = new Promise(resolve => setTimeout(() => resolve(null), 6000));
       const result = await Promise.race([parsePromise, timeout]);
-      log('exif parsed: ' + (result ? Object.keys(result).length + ' keys' : 'null'));
       return result || {};
-    } catch (e) {
-      log('exif error: ' + e.message);
-      return {};
-    }
+    } catch (e) { return {}; }
   }
 
   function isHeic(file) {
@@ -405,20 +378,19 @@
   }
 
   async function handleFile(file) {
-    log('handleFile START');
     currentName = file.name || 'photo';
     dropLabel.textContent = currentName.length > 38 ? currentName.slice(0, 35) + '...' : currentName;
+    showToast('Loading...');
     const exifPromise = parseExifSafe(file);
     let imageBlob = file;
     if (isHeic(file)) {
-      log('detected HEIC, converting');
+      showToast('Converting HEIC...');
       try {
         const heic2any = await window.__loadHeic2any();
         const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
         imageBlob = Array.isArray(converted) ? converted[0] : converted;
-        log('HEIC converted, new size=' + imageBlob.size);
       } catch (err) {
-        log('HEIC conversion failed: ' + err.message);
+        showToast('HEIC failed: ' + (err.message || 'unknown'));
         return;
       }
     }
@@ -429,16 +401,14 @@
         Object.defineProperty(image, 'naturalWidth', { get: () => image.width });
         Object.defineProperty(image, 'naturalHeight', { get: () => image.height });
       }
-      log('image ready ' + image.naturalWidth + 'x' + image.naturalHeight);
       const exif = await exifPromise;
       currentMeta = parseMeta(exif || {}, image.naturalWidth, image.naturalHeight);
-      log('rendering...');
-      render();
+      render(true);
       downloadBtn.disabled = false;
       resetBtn.disabled = false;
-      log('DONE');
+      showToast('Loaded');
     } catch (err) {
-      log('handleFile error: ' + (err.message || 'unknown'));
+      showToast('Decode failed: ' + (err.message || 'unknown'));
     }
   }
 
@@ -525,7 +495,7 @@
     return canvas;
   }
 
-  function render() {
+  function render(scrollTo) {
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const previewMax = isMobile ? 1600 : 2400;
     const canvas = renderToCanvas(previewMax);
@@ -534,6 +504,11 @@
     stage.innerHTML = '';
     stage.appendChild(canvas);
     updateReadout();
+    if (scrollTo) {
+      requestAnimationFrame(() => {
+        stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
   }
 
   function drawFooter(ctx, W, H, border, footer, imgH) {
@@ -629,8 +604,6 @@
     if (fields.resolution && m.width && m.height) parts.push(m.width + '×' + m.height);
     readout.innerHTML = parts.length ? parts.join('  ·  ') : '<b>No fields selected.</b>';
   }
-
-  log('init complete');
 })();
 </script>
 </body>
