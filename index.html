@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -10,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script>
-  // Lazy-load heic2any only when needed, so a CDN hiccup never blocks JPEGs
   window.__loadHeic2any = function () {
     return new Promise((resolve, reject) => {
       if (window.heic2any) return resolve(window.heic2any);
@@ -44,283 +42,132 @@
       radial-gradient(circle at 20% 10%, rgba(0,0,0,0.04) 0%, transparent 40%),
       radial-gradient(circle at 80% 90%, rgba(200,71,43,0.06) 0%, transparent 40%);
   }
-  .wrap {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 28px 22px 80px;
-  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 22px 80px; }
   header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 14px;
-    margin-bottom: 28px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 28px;
   }
   .brand {
-    font-weight: 600;
-    font-size: clamp(28px, 5vw, 44px);
-    letter-spacing: -0.02em;
-    font-style: italic;
+    font-weight: 600; font-size: clamp(28px, 5vw, 44px);
+    letter-spacing: -0.02em; font-style: italic;
   }
-  .brand span {
-    font-style: normal;
-    color: var(--accent);
-  }
+  .brand span { font-style: normal; color: var(--accent); }
   .tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
   }
-
-.controls {
-display: grid;
-grid-template-columns: 1fr;
-gap: 14px;
-margin-bottom: 28px;
-}
-@media (min-width: 720px) {
-.controls { grid-template-columns: 2fr 1fr 1fr; }
-}
-
-.drop {
-position: relative;
-border: 1.5px dashed var(–line);
-background: var(–paper);
-padding: 22px;
-cursor: pointer;
-transition: background 0.2s, border-color 0.2s;
-min-height: 110px;
-display: flex;
-align-items: center;
-gap: 16px;
-}
-.drop:hover, .drop.over {
-background: #fff;
-border-color: var(–accent);
-}
-.drop input { display: none; }
-.drop-icon {
-width: 56px; height: 56px;
-border: 1.5px solid var(–line);
-display: flex; align-items: center; justify-content: center;
-border-radius: 50%;
-flex-shrink: 0;
-font-size: 22px;
-}
-.drop-text { flex: 1; }
-.drop-text strong {
-display: block;
-font-size: 19px;
-font-weight: 500;
-margin-bottom: 2px;
-}
-.drop-text small {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 11px;
-color: var(–muted);
-letter-spacing: 0.05em;
-}
-
-.field {
-background: var(–paper);
-border: 1px solid var(–line);
-padding: 14px 16px;
-display: flex;
-flex-direction: column;
-justify-content: center;
-}
-.field label {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 10px;
-text-transform: uppercase;
-letter-spacing: 0.18em;
-color: var(–muted);
-margin-bottom: 6px;
-}
-.field select, .field input[type=“range”] {
-background: transparent;
-border: none;
-font-family: ‘Fraunces’, serif;
-font-size: 17px;
-color: var(–ink);
-width: 100%;
-cursor: pointer;
-}
-.field select:focus, .field input:focus { outline: none; }
-.range-row {
-display: flex; align-items: center; gap: 10px;
-}
-.range-row span {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 13px;
-min-width: 36px;
-text-align: right;
-}
-
-.toggles {
-background: var(–paper);
-border: 1px solid var(–line);
-padding: 14px 16px;
-margin-bottom: 22px;
-}
-.toggles-label {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 10px;
-text-transform: uppercase;
-letter-spacing: 0.18em;
-color: var(–muted);
-margin-bottom: 10px;
-}
-.chips {
-display: flex;
-flex-wrap: wrap;
-gap: 8px;
-}
-.chip {
-position: relative;
-cursor: pointer;
-user-select: none;
--webkit-tap-highlight-color: transparent;
-display: inline-flex;
-}
-.chip input {
-position: absolute;
-opacity: 0;
-width: 0;
-height: 0;
-pointer-events: none;
-}
-.chip span {
-display: inline-block;
-padding: 9px 14px;
-border: 1px solid var(–line);
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 11px;
-text-transform: uppercase;
-letter-spacing: 0.12em;
-background: transparent;
-color: var(–muted);
-transition: all 0.15s;
-pointer-events: none;
-}
-.chip input:checked + span {
-background: var(–ink);
-color: var(–bg);
-border-color: var(–ink);
-}
-.chip:hover span { border-color: var(–accent); }
-.chip:active span { transform: scale(0.97); }
-
-.stage {
-background: var(–paper);
-border: 1px solid var(–line);
-padding: 28px;
-min-height: 320px;
-display: flex;
-align-items: center;
-justify-content: center;
-margin-bottom: 22px;
-position: relative;
-}
-.stage.empty {
-flex-direction: column;
-gap: 10px;
-color: var(–muted);
-}
-.stage canvas {
-max-width: 100%;
-max-height: 70vh;
-height: auto;
-box-shadow: 0 18px 40px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
-}
-.empty-mark {
-font-style: italic;
-font-size: 22px;
-font-weight: 400;
-}
-.empty-sub {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 11px;
-text-transform: uppercase;
-letter-spacing: 0.18em;
-}
-
-.actions {
-display: flex;
-gap: 12px;
-flex-wrap: wrap;
-align-items: center;
-justify-content: space-between;
-}
-.meta-readout {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 11px;
-color: var(–muted);
-letter-spacing: 0.05em;
-line-height: 1.6;
-}
-.meta-readout b { color: var(–ink); font-weight: 600; }
-button {
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 12px;
-text-transform: uppercase;
-letter-spacing: 0.18em;
-padding: 14px 22px;
-border: 1px solid var(–line);
-background: var(–ink);
-color: var(–bg);
-cursor: pointer;
-transition: all 0.15s;
-}
-button:hover:not(:disabled) {
-background: var(–accent);
-border-color: var(–accent);
-}
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-button.ghost {
-background: transparent;
-color: var(–ink);
-}
-button.ghost:hover:not(:disabled) {
-background: var(–ink);
-color: var(–bg);
-}
-
-footer {
-margin-top: 40px;
-border-top: 1px solid var(–line);
-padding-top: 14px;
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 10px;
-text-transform: uppercase;
-letter-spacing: 0.18em;
-color: var(–muted);
-display: flex;
-justify-content: space-between;
-}
-
-.toast {
-position: fixed;
-bottom: 24px;
-left: 50%;
-transform: translateX(-50%) translateY(20px);
-background: var(–ink);
-color: var(–bg);
-padding: 12px 22px;
-font-family: ‘JetBrains Mono’, monospace;
-font-size: 11px;
-text-transform: uppercase;
-letter-spacing: 0.18em;
-opacity: 0;
-transition: all 0.3s;
-pointer-events: none;
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .controls { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 28px; }
+  @media (min-width: 720px) { .controls { grid-template-columns: 2fr 1fr 1fr; } }
+  .drop {
+    position: relative; border: 1.5px dashed var(--line); background: var(--paper);
+    padding: 22px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+    min-height: 110px; display: flex; align-items: center; gap: 16px;
+  }
+  .drop:hover, .drop.over { background: #fff; border-color: var(--accent); }
+  .drop input { display: none; }
+  .drop-icon {
+    width: 56px; height: 56px; border: 1.5px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; flex-shrink: 0; font-size: 22px;
+  }
+  .drop-text { flex: 1; }
+  .drop-text strong { display: block; font-size: 19px; font-weight: 500; margin-bottom: 2px; }
+  .drop-text small {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: 0.05em;
+  }
+  .field {
+    background: var(--paper); border: 1px solid var(--line); padding: 14px 16px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .field label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 6px;
+  }
+  .field select, .field input[type="range"] {
+    background: transparent; border: none; font-family: 'Fraunces', serif;
+    font-size: 17px; color: var(--ink); width: 100%; cursor: pointer;
+  }
+  .field select:focus, .field input:focus { outline: none; }
+  .range-row { display: flex; align-items: center; gap: 10px; }
+  .range-row span {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    min-width: 36px; text-align: right;
+  }
+  .toggles {
+    background: var(--paper); border: 1px solid var(--line);
+    padding: 14px 16px; margin-bottom: 22px;
+  }
+  .toggles-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 10px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    position: relative; cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent; display: inline-flex;
+  }
+  .chip input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+  .chip span {
+    display: inline-block; padding: 9px 14px; border: 1px solid var(--line);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    background: transparent; color: var(--muted);
+    transition: all 0.15s; pointer-events: none;
+  }
+  .chip input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .chip:hover span { border-color: var(--accent); }
+  .chip:active span { transform: scale(0.97); }
+  .stage {
+    background: var(--paper); border: 1px solid var(--line); padding: 28px;
+    min-height: 320px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 22px; position: relative;
+  }
+  .stage.empty { flex-direction: column; gap: 10px; color: var(--muted); }
+  .stage canvas {
+    max-width: 100%; max-height: 70vh; height: auto;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
+  }
+  .empty-mark { font-style: italic; font-size: 22px; font-weight: 400; }
+  .empty-sub {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+  }
+  .actions {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    align-items: center; justify-content: space-between;
+  }
+  .meta-readout {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: 0.05em; line-height: 1.6;
+  }
+  .meta-readout b { color: var(--ink); font-weight: 600; }
+  button {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.18em; padding: 14px 22px;
+    border: 1px solid var(--line); background: var(--ink); color: var(--bg);
+    cursor: pointer; transition: all 0.15s;
+  }
+  button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--ink); }
+  button.ghost:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
+  footer {
+    margin-top: 40px; border-top: 1px solid var(--line); padding-top: 14px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
+    display: flex; justify-content: space-between;
+  }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 12px 22px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
-
 </head>
 <body>
 <div class="wrap">
@@ -338,27 +185,22 @@ pointer-events: none;
         <small>JPEG · PNG · HEIC · drag, drop, or tap</small>
       </div>
     </label>
-
-```
-<div class="field">
-  <label>Border ratio</label>
-  <div class="range-row">
-    <input type="range" id="border" min="3" max="12" step="0.5" value="6" />
-    <span id="borderVal">6%</span>
-  </div>
-</div>
-
-<div class="field">
-  <label>Aspect</label>
-  <select id="aspect">
-    <option value="native">Native</option>
-    <option value="square">Square 1:1</option>
-    <option value="4:5">Portrait 4:5</option>
-    <option value="3:2">Classic 3:2</option>
-  </select>
-</div>
-```
-
+    <div class="field">
+      <label>Border ratio</label>
+      <div class="range-row">
+        <input type="range" id="border" min="3" max="12" step="0.5" value="6" />
+        <span id="borderVal">6%</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Aspect</label>
+      <select id="aspect">
+        <option value="native">Native</option>
+        <option value="square">Square 1:1</option>
+        <option value="4:5">Portrait 4:5</option>
+        <option value="3:2">Classic 3:2</option>
+      </select>
+    </div>
   </div>
 
   <div class="toggles">
@@ -463,20 +305,12 @@ pointer-events: none;
     if (!currentImage) return;
     downloadBtn.disabled = true;
     showToast('Rendering full size...');
-
-    // Yield so the toast paints before the heavy render blocks the main thread
     await new Promise(r => setTimeout(r, 50));
-
     try {
-      // Render at native resolution. The image's source dimensions are the
-      // ceiling we care about — go bigger than that and we'd just be upscaling.
       const nativeMax = Math.max(currentImage.naturalWidth, currentImage.naturalHeight) * 1.2;
-      // Hard ceiling to stay within browser canvas limits (most allow ~16384px,
-      // but memory failure usually hits well before that on mobile).
       const safetyCap = 8192;
       const fullCanvas = renderToCanvas(Math.min(nativeMax, safetyCap));
       if (!fullCanvas) throw new Error('Render failed');
-
       fullCanvas.toBlob(blob => {
         if (!blob) {
           showToast('Export failed — try smaller border');
@@ -508,357 +342,12 @@ pointer-events: none;
   }
 
   function loadImageFromBlob(blob) {
-    // Try the standard <img> path first; fall back to createImageBitmap which
-    // handles some files (CMYK JPEGs, certain progressive encodings) that <img> rejects.
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(blob);
       const img = new Image();
       img.onload = () => {
-        // naturalWidth of 0 means decode silently failed
         if (img.naturalWidth === 0) {
           URL.revokeObjectURL(url);
           tryBitmap();
         } else {
-          resolve({ image: img, cleanup: () => URL.revokeObjectURL(url) });
-        }
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        tryBitmap();
-      };
-      img.src = url;
-
-      function tryBitmap() {
-        if (typeof createImageBitmap !== 'function') {
-          return reject(new Error('Browser cannot decode this image'));
-        }
-        createImageBitmap(blob)
-          .then(bmp => resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }))
-          .catch(err => reject(err));
-      }
-    });
-  }
-
-  async function parseExifSafe(file) {
-    // Don't let EXIF parsing block the image. Race it with a timeout, and
-    // never let a parse error stop us from rendering the photo.
-    if (typeof window.exifr === 'undefined') return {};
-    try {
-      const parsePromise = window.exifr.parse(file, {
-        tiff: true, exif: true, ifd0: true, gps: false, xmp: false, icc: false
-      });
-      const timeout = new Promise(resolve => setTimeout(() => resolve(null), 6000));
-      const result = await Promise.race([parsePromise, timeout]);
-      return result || {};
-    } catch (e) {
-      console.warn('EXIF parse failed:', e);
-      return {};
-    }
-  }
-
-  function isHeic(file) {
-    const name = (file.name || '').toLowerCase();
-    const type = (file.type || '').toLowerCase();
-    return name.endsWith('.heic') || name.endsWith('.heif') ||
-           type === 'image/heic' || type === 'image/heif';
-  }
-
-  async function handleFile(file) {
-    currentName = file.name || 'photo';
-    dropLabel.textContent = currentName.length > 38 ? currentName.slice(0, 35) + '...' : currentName;
-    showToast('Loading...');
-
-    // Kick off EXIF parsing in the background — it must not block the image
-    const exifPromise = parseExifSafe(file);
-
-    // If HEIC, convert to JPEG blob first
-    let imageBlob = file;
-    if (isHeic(file)) {
-      showToast('Converting HEIC...');
-      try {
-        const heic2any = await window.__loadHeic2any();
-        const converted = await heic2any({
-          blob: file, toType: 'image/jpeg', quality: 0.92
-        });
-        imageBlob = Array.isArray(converted) ? converted[0] : converted;
-      } catch (err) {
-        console.error('HEIC conversion error:', err);
-        showToast('HEIC failed: ' + (err.message || 'unknown'));
-        return;
-      }
-    }
-
-    try {
-      const { image } = await loadImageFromBlob(imageBlob);
-      currentImage = image;
-      if (typeof image.naturalWidth === 'undefined') {
-        Object.defineProperty(image, 'naturalWidth', { get: () => image.width });
-        Object.defineProperty(image, 'naturalHeight', { get: () => image.height });
-      }
-      const exif = await exifPromise;
-      currentMeta = parseMeta(exif || {}, image.naturalWidth, image.naturalHeight);
-      render();
-      downloadBtn.disabled = false;
-      resetBtn.disabled = false;
-      showToast('Loaded');
-    } catch (err) {
-      console.error('Image load error:', err, 'file size:', file.size, 'type:', file.type, 'name:', file.name);
-      const msg = err && err.message ? err.message : 'unknown';
-      showToast('Decode failed: ' + msg);
-    }
-  }
-
-  function parseMeta(exif, width, height) {
-    const make = (exif.Make || '').trim();
-    const model = (exif.Model || '').trim();
-    const fNum = exif.FNumber || exif.ApertureValue;
-    const exposure = exif.ExposureTime;
-    const focal = exif.FocalLength;
-    const focal35 = exif.FocalLengthIn35mmFormat;
-    const iso = exif.ISO || exif.ISOSpeedRatings || exif.PhotographicSensitivity;
-    const lens = (exif.LensModel || '').trim();
-
-    // Prefer EXIF pixel dimensions when present (correct for orientation), fall
-    // back to the decoded image dimensions which are always available.
-    const exifW = exif.ExifImageWidth || exif.PixelXDimension || exif.ImageWidth;
-    const exifH = exif.ExifImageHeight || exif.PixelYDimension || exif.ImageHeight;
-    const w = width || exifW || 0;
-    const h = height || exifH || 0;
-    const megapixels = (w && h) ? (w * h) / 1_000_000 : 0;
-
-    return {
-      make, model, fNum, exposure, focal, focal35, iso, lens,
-      width: w, height: h, megapixels,
-      hasAny: !!(make || model || fNum || exposure || focal || iso || w)
-    };
-  }
-
-  function formatShutter(t) {
-    if (!t) return '';
-    if (t >= 1) return t + '"';
-    const denom = Math.round(1 / t);
-    return '1/' + denom;
-  }
-
-  function formatBrand(make, model) {
-    if (!make && !model) return '';
-    if (!make) return model;
-    if (!model) return make;
-    // If model already starts with make (e.g., "Canon EOS R5"), don't duplicate
-    if (model.toUpperCase().startsWith(make.toUpperCase())) return model;
-    return make + ' ' + model;
-  }
-
-  function brandTitleCase(s) {
-    if (!s) return '';
-    const cleaned = s.replace(/\b(CORPORATION|IMAGING|COMPANY|CO\.?,?\s*LTD\.?)\b/gi, '').trim();
-    // Only normalize words that are pure-alpha all-caps (e.g., "NIKON", "FUJIFILM").
-    // Preserve model codes that mix letters and digits or hyphens (e.g., "X-T50", "EOS R5").
-    return cleaned.split(/\s+/).map(w => {
-      if (/^[A-Z]+$/.test(w) && w.length > 1) {
-        return w[0] + w.slice(1).toLowerCase();
-      }
-      return w;
-    }).join(' ').replace(/\s+/g, ' ').trim();
-  }
-
-  function renderToCanvas(maxDim) {
-    if (!currentImage) return null;
-
-    const img = currentImage;
-    const aspect = aspectEl.value;
-    const borderPct = parseFloat(borderEl.value) / 100;
-
-    let srcW = img.naturalWidth, srcH = img.naturalHeight;
-    let cropW = srcW, cropH = srcH, cropX = 0, cropY = 0;
-
-    if (aspect !== 'native') {
-      const ratios = { 'square': 1, '4:5': 4 / 5, '3:2': 3 / 2 };
-      const target = ratios[aspect];
-      const currentR = srcW / srcH;
-      if (currentR > target) {
-        cropW = Math.round(srcH * target);
-        cropX = Math.round((srcW - cropW) / 2);
-      } else {
-        cropH = Math.round(srcW / target);
-        cropY = Math.round((srcH - cropH) / 2);
-      }
-    }
-
-    const longEdge = Math.max(cropW, cropH);
-    const border = Math.round(longEdge * borderPct);
-    const footer = Math.round(longEdge * borderPct * 2.0);
-
-    const outW = cropW + border * 2;
-    const outH = cropH + border + footer;
-
-    const scale = Math.min(1, maxDim / Math.max(outW, outH));
-    const fW = Math.round(outW * scale);
-    const fH = Math.round(outH * scale);
-    const fBorder = border * scale;
-    const fFooter = footer * scale;
-    const fImgW = cropW * scale;
-    const fImgH = cropH * scale;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = fW;
-    canvas.height = fH;
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, fW, fH);
-    ctx.drawImage(img, cropX, cropY, cropW, cropH, fBorder, fBorder, fImgW, fImgH);
-    drawFooter(ctx, fW, fH, fBorder, fFooter, fImgH);
-
-    return canvas;
-  }
-
-  function render() {
-    // Preview render — keep small for snappy on-screen updates
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const previewMax = isMobile ? 1600 : 2400;
-    const canvas = renderToCanvas(previewMax);
-    if (!canvas) return;
-
-    stage.classList.remove('empty');
-    stage.innerHTML = '';
-    stage.appendChild(canvas);
-    updateReadout();
-  }
-
-  function drawFooter(ctx, W, H, border, footer, imgH) {
-    const m = currentMeta;
-    const fields = getEnabledFields();
-    const footerTop = border + imgH;
-    const footerCenterY = footerTop + footer / 2;
-
-    const showBrand = fields.brand && (m.make || m.model);
-    const showLens = fields.lens && m.lens;
-    const brand = showBrand ? brandTitleCase(formatBrand(m.make, m.model)) : '';
-    const lens = showLens ? brandTitleCase(m.lens) : '';
-
-    const techParts = [];
-    if (fields.focal && m.focal) techParts.push(Math.round(m.focal) + 'mm');
-    if (fields.aperture && m.fNum) techParts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
-    if (fields.shutter && m.exposure) techParts.push(formatShutter(m.exposure));
-    if (fields.iso && m.iso) techParts.push('ISO ' + m.iso);
-    if (fields.megapixels && m.megapixels) techParts.push(m.megapixels.toFixed(1) + 'MP');
-    if (fields.resolution && m.width && m.height) techParts.push(m.width + '×' + m.height);
-    const tech = techParts.join('  ·  ');
-
-    if (!brand && !lens && !tech) {
-      ctx.fillStyle = '#999999';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'center';
-      ctx.font = `italic 400 ${footer * 0.22}px "Fraunces", Georgia, serif`;
-      ctx.fillText(m.hasAny ? 'No fields selected' : 'No EXIF metadata', W / 2, footerCenterY);
-      return;
-    }
-
-    // Typography sizing relative to footer height
-    const brandSize = footer * 0.22;
-    const subSize = footer * 0.12;
-    const techSize = footer * 0.16;
-    const padX = border * 1.2;
-    const gap = footer * 0.06; // gap between stacked lines
-
-    // Measure both columns to detect collision
-    ctx.font = `700 ${brandSize}px Helvetica, "Helvetica Neue", Arial, sans-serif`;
-    const brandWidth = brand ? ctx.measureText(brand).width : 0;
-    ctx.font = `400 ${subSize}px "JetBrains Mono", monospace`;
-    const lensWidth = lens ? ctx.measureText(lens).width : 0;
-    ctx.font = `500 ${techSize}px "JetBrains Mono", monospace`;
-    const techWidth = tech ? ctx.measureText(tech).width : 0;
-
-    const leftWidth = Math.max(brandWidth, lensWidth);
-    const minSeparator = footer * 0.5; // minimum gap between left/right blocks
-    const totalNeeded = leftWidth + minSeparator + techWidth + padX * 2;
-    const horizontal = totalNeeded <= W;
-
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#1a1a1a';
-
-    if (horizontal) {
-      // ── Two-column horizontal layout ──
-      // Left column: brand on top, lens below (vertically centered as a block)
-      const leftLines = [];
-      if (brand) leftLines.push({ text: brand, size: brandSize, font: `700 ${brandSize}px Helvetica, "Helvetica Neue", Arial, sans-serif`, color: '#1a1a1a' });
-      if (lens) leftLines.push({ text: lens, size: subSize, font: `400 ${subSize}px "JetBrains Mono", monospace`, color: '#888888' });
-      drawStack(ctx, leftLines, padX, footerCenterY, gap, 'left');
-
-      // Right column: tech, vertically centered
-      if (tech) {
-        ctx.fillStyle = '#1a1a1a';
-        ctx.font = `500 ${techSize}px "JetBrains Mono", monospace`;
-        ctx.textAlign = 'right';
-        ctx.fillText(tech, W - padX, footerCenterY);
-      }
-
-      // Subtle vertical separator if both sides have content and there's room
-      if (brand && tech) {
-        const leftEdge = padX + leftWidth;
-        const rightEdge = W - padX - techWidth;
-        if (rightEdge - leftEdge > footer * 0.5) {
-          const lineX = (leftEdge + rightEdge) / 2;
-          ctx.strokeStyle = '#d8d8d8';
-          ctx.lineWidth = Math.max(1, footer * 0.008);
-          ctx.beginPath();
-          ctx.moveTo(lineX, footerCenterY - footer * 0.22);
-          ctx.lineTo(lineX, footerCenterY + footer * 0.22);
-          ctx.stroke();
-        }
-      }
-    } else {
-      // ── Stacked centered layout for narrow footers ──
-      const lines = [];
-      if (brand) lines.push({ text: brand, size: brandSize, font: `700 ${brandSize}px Helvetica, "Helvetica Neue", Arial, sans-serif`, color: '#1a1a1a' });
-      if (lens)  lines.push({ text: lens, size: subSize, font: `400 ${subSize}px "JetBrains Mono", monospace`, color: '#888888' });
-      if (tech)  lines.push({ text: tech, size: techSize, font: `500 ${techSize}px "JetBrains Mono", monospace`, color: '#1a1a1a' });
-      drawStack(ctx, lines, W / 2, footerCenterY, gap, 'center');
-    }
-  }
-
-  // Draw a vertical stack of text lines, vertically centered around centerY
-  function drawStack(ctx, lines, x, centerY, gap, align) {
-    if (!lines.length) return;
-    const totalHeight = lines.reduce((s, l) => s + l.size, 0) + gap * (lines.length - 1);
-    let y = centerY - totalHeight / 2;
-    ctx.textAlign = align;
-    ctx.textBaseline = 'top';
-    for (const line of lines) {
-      ctx.fillStyle = line.color;
-      ctx.font = line.font;
-      ctx.fillText(line.text, x, y);
-      y += line.size + gap;
-    }
-    ctx.textBaseline = 'middle'; // restore
-  }
-
-  function updateReadout() {
-    const m = currentMeta;
-    const fields = getEnabledFields();
-    if (!m.hasAny) {
-      readout.innerHTML = '<b>No EXIF found.</b> The photo will be framed without specs.';
-      return;
-    }
-    const parts = [];
-    if (fields.brand) {
-      const brand = brandTitleCase(formatBrand(m.make, m.model));
-      if (brand) parts.push('<b>' + brand + '</b>');
-    }
-    if (fields.lens && m.lens) parts.push(brandTitleCase(m.lens));
-    if (fields.focal && m.focal) parts.push(Math.round(m.focal) + 'mm');
-    if (fields.aperture && m.fNum) parts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
-    if (fields.shutter && m.exposure) parts.push(formatShutter(m.exposure));
-    if (fields.iso && m.iso) parts.push('ISO ' + m.iso);
-    if (fields.megapixels && m.megapixels) parts.push(m.megapixels.toFixed(1) + 'MP');
-    if (fields.resolution && m.width && m.height) parts.push(m.width + '×' + m.height);
-    readout.innerHTML = parts.length ? parts.join('  ·  ') : '<b>No fields selected.</b>';
-  }
-})();
-</script>
-
-</body>
-</html>
+          resolve({ image: img, cleanup: () => URL.​​​​​​​​​​​​​​​​
