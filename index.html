@@ -37,11 +37,6 @@
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  body {
-    background-image:
-      radial-gradient(circle at 20% 10%, rgba(0,0,0,0.04) 0%, transparent 40%),
-      radial-gradient(circle at 80% 90%, rgba(200,71,43,0.06) 0%, transparent 40%);
-  }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 22px 80px; }
   header {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -116,7 +111,6 @@
     transition: all 0.15s; pointer-events: none;
   }
   .chip input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .chip:hover span { border-color: var(--accent); }
   .chip:active span { transform: scale(0.97); }
   .stage {
     background: var(--paper); border: 1px solid var(--line); padding: 28px;
@@ -133,6 +127,13 @@
     font-family: 'JetBrains Mono', monospace; font-size: 11px;
     text-transform: uppercase; letter-spacing: 0.18em;
   }
+  #debug {
+    background: #111; color: #0f0; padding: 12px 16px; margin-bottom: 22px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    line-height: 1.7; white-space: pre-wrap; word-break: break-all;
+    max-height: 200px; overflow-y: auto;
+  }
+  #debug:empty { display: none; }
   .actions {
     display: flex; gap: 12px; flex-wrap: wrap;
     align-items: center; justify-content: space-between;
@@ -148,25 +149,14 @@
     border: 1px solid var(--line); background: var(--ink); color: var(--bg);
     cursor: pointer; transition: all 0.15s;
   }
-  button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.ghost { background: transparent; color: var(--ink); }
-  button.ghost:hover:not(:disabled) { background: var(--ink); color: var(--bg); }
   footer {
     margin-top: 40px; border-top: 1px solid var(--line); padding-top: 14px;
     font-family: 'JetBrains Mono', monospace; font-size: 10px;
     text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
     display: flex; justify-content: space-between;
   }
-  .toast {
-    position: fixed; bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--ink); color: var(--bg); padding: 12px 22px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.18em;
-    opacity: 0; transition: all 0.3s; pointer-events: none;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -217,6 +207,8 @@
     </div>
   </div>
 
+  <div id="debug"></div>
+
   <div class="stage empty" id="stage">
     <div class="empty-mark">Your framed photo appears here</div>
     <div class="empty-sub">— upload to begin —</div>
@@ -238,10 +230,26 @@
   </footer>
 </div>
 
-<div class="toast" id="toast">Saved</div>
-
 <script>
 (function () {
+  const debugEl = document.getElementById('debug');
+  function log(msg) {
+    const time = new Date().toLocaleTimeString();
+    debugEl.textContent += '[' + time + '] ' + msg + '\n';
+    debugEl.scrollTop = debugEl.scrollHeight;
+    console.log('[FRAME]', msg);
+  }
+
+  window.addEventListener('error', e => {
+    log('JS ERROR: ' + (e.message || 'unknown') + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+  });
+  window.addEventListener('unhandledrejection', e => {
+    log('PROMISE REJECTED: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+  });
+
+  log('Script started');
+  log('exifr loaded: ' + (typeof window.exifr !== 'undefined'));
+
   const fileInput = document.getElementById('file');
   const drop = document.getElementById('drop');
   const dropLabel = document.getElementById('dropLabel');
@@ -252,7 +260,6 @@
   const readout = document.getElementById('readout');
   const downloadBtn = document.getElementById('download');
   const resetBtn = document.getElementById('reset');
-  const toast = document.getElementById('toast');
 
   let currentImage = null;
   let currentMeta = null;
@@ -283,6 +290,7 @@
     drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); })
   );
   drop.addEventListener('drop', e => {
+    log('drop event fired');
     if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   });
   drop.addEventListener('click', e => {
@@ -292,7 +300,14 @@
     }
   });
   fileInput.addEventListener('change', e => {
-    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+    log('change event fired, files: ' + (e.target.files ? e.target.files.length : 'null'));
+    if (e.target.files && e.target.files[0]) {
+      const f = e.target.files[0];
+      log('file: ' + f.name + ' / ' + f.type + ' / ' + f.size + ' bytes');
+      handleFile(f);
+    } else {
+      log('no file in change event');
+    }
   });
 
   resetBtn.addEventListener('click', () => {
@@ -305,24 +320,20 @@
     readout.innerHTML = '<b>No metadata yet.</b> Camera, lens, and exposure data appear once a photo is loaded.';
     downloadBtn.disabled = true;
     resetBtn.disabled = true;
+    debugEl.textContent = '';
   });
 
   downloadBtn.addEventListener('click', async () => {
     if (!currentImage) return;
     downloadBtn.disabled = true;
-    showToast('Rendering full size...');
+    log('rendering full size for download');
     await new Promise(r => setTimeout(r, 50));
     try {
       const nativeMax = Math.max(currentImage.naturalWidth, currentImage.naturalHeight) * 1.2;
-      const safetyCap = 8192;
-      const fullCanvas = renderToCanvas(Math.min(nativeMax, safetyCap));
+      const fullCanvas = renderToCanvas(Math.min(nativeMax, 8192));
       if (!fullCanvas) throw new Error('Render failed');
       fullCanvas.toBlob(blob => {
-        if (!blob) {
-          showToast('Export failed — try smaller border');
-          downloadBtn.disabled = false;
-          return;
-        }
+        if (!blob) { log('toBlob returned null'); downloadBtn.disabled = false; return; }
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -331,58 +342,57 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        showToast('Downloaded');
+        log('downloaded');
         downloadBtn.disabled = false;
       }, 'image/jpeg', 0.95);
     } catch (err) {
-      console.error('Full-res render failed:', err);
-      showToast('Export failed: ' + (err.message || 'unknown'));
+      log('download error: ' + err.message);
       downloadBtn.disabled = false;
     }
   });
 
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 1600);
-  }
-
   function loadImageFromBlob(blob) {
+    log('loadImageFromBlob, size=' + blob.size + ' type=' + blob.type);
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(blob);
+      log('object URL created');
       const img = new Image();
       img.onload = () => {
-        if (img.naturalWidth === 0) {
-          URL.revokeObjectURL(url);
-          tryBitmap();
-        } else {
-          resolve({ image: img, cleanup: () => URL.revokeObjectURL(url) });
-        }
+        log('img.onload fired, naturalWidth=' + img.naturalWidth);
+        if (img.naturalWidth === 0) { URL.revokeObjectURL(url); tryBitmap(); }
+        else { resolve({ image: img, cleanup: () => URL.revokeObjectURL(url) }); }
       };
-      img.onerror = () => { URL.revokeObjectURL(url); tryBitmap(); };
+      img.onerror = (e) => {
+        log('img.onerror fired');
+        URL.revokeObjectURL(url);
+        tryBitmap();
+      };
       img.src = url;
       function tryBitmap() {
+        log('trying createImageBitmap fallback');
         if (typeof createImageBitmap !== 'function') {
+          log('createImageBitmap not available');
           return reject(new Error('Browser cannot decode this image'));
         }
         createImageBitmap(blob)
-          .then(bmp => resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }))
-          .catch(err => reject(err));
+          .then(bmp => { log('bitmap decoded ' + bmp.width + 'x' + bmp.height); resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }); })
+          .catch(err => { log('bitmap failed: ' + err.message); reject(err); });
       }
     });
   }
 
   async function parseExifSafe(file) {
-    if (typeof window.exifr === 'undefined') return {};
+    if (typeof window.exifr === 'undefined') { log('exifr not loaded, skipping EXIF'); return {}; }
     try {
       const parsePromise = window.exifr.parse(file, {
         tiff: true, exif: true, ifd0: true, gps: false, xmp: false, icc: false
       });
       const timeout = new Promise(resolve => setTimeout(() => resolve(null), 6000));
       const result = await Promise.race([parsePromise, timeout]);
+      log('exif parsed: ' + (result ? Object.keys(result).length + ' keys' : 'null'));
       return result || {};
     } catch (e) {
-      console.warn('EXIF parse failed:', e);
+      log('exif error: ' + e.message);
       return {};
     }
   }
@@ -395,19 +405,233 @@
   }
 
   async function handleFile(file) {
+    log('handleFile START');
     currentName = file.name || 'photo';
     dropLabel.textContent = currentName.length > 38 ? currentName.slice(0, 35) + '...' : currentName;
-    showToast('Loading...');
     const exifPromise = parseExifSafe(file);
     let imageBlob = file;
     if (isHeic(file)) {
-      showToast('Converting HEIC...');
+      log('detected HEIC, converting');
       try {
         const heic2any = await window.__loadHeic2any();
         const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
         imageBlob = Array.isArray(converted) ? converted[0] : converted;
+        log('HEIC converted, new size=' + imageBlob.size);
       } catch (err) {
-        console.error('HEIC conversion error:', err);
-        showToast('HEIC failed: ' + (err.message || 'unknown'));
+        log('HEIC conversion failed: ' + err.message);
         return;
-      }​​​​​​​​​​​​​​​​
+      }
+    }
+    try {
+      const { image } = await loadImageFromBlob(imageBlob);
+      currentImage = image;
+      if (typeof image.naturalWidth === 'undefined') {
+        Object.defineProperty(image, 'naturalWidth', { get: () => image.width });
+        Object.defineProperty(image, 'naturalHeight', { get: () => image.height });
+      }
+      log('image ready ' + image.naturalWidth + 'x' + image.naturalHeight);
+      const exif = await exifPromise;
+      currentMeta = parseMeta(exif || {}, image.naturalWidth, image.naturalHeight);
+      log('rendering...');
+      render();
+      downloadBtn.disabled = false;
+      resetBtn.disabled = false;
+      log('DONE');
+    } catch (err) {
+      log('handleFile error: ' + (err.message || 'unknown'));
+    }
+  }
+
+  function parseMeta(exif, width, height) {
+    const make = (exif.Make || '').trim();
+    const model = (exif.Model || '').trim();
+    const fNum = exif.FNumber || exif.ApertureValue;
+    const exposure = exif.ExposureTime;
+    const focal = exif.FocalLength;
+    const focal35 = exif.FocalLengthIn35mmFormat;
+    const iso = exif.ISO || exif.ISOSpeedRatings || exif.PhotographicSensitivity;
+    const lens = (exif.LensModel || '').trim();
+    const exifW = exif.ExifImageWidth || exif.PixelXDimension || exif.ImageWidth;
+    const exifH = exif.ExifImageHeight || exif.PixelYDimension || exif.ImageHeight;
+    const w = width || exifW || 0;
+    const h = height || exifH || 0;
+    const megapixels = (w && h) ? (w * h) / 1000000 : 0;
+    return {
+      make, model, fNum, exposure, focal, focal35, iso, lens,
+      width: w, height: h, megapixels,
+      hasAny: !!(make || model || fNum || exposure || focal || iso || w)
+    };
+  }
+
+  function formatShutter(t) {
+    if (!t) return '';
+    if (t >= 1) return t + '"';
+    return '1/' + Math.round(1 / t);
+  }
+
+  function formatBrand(make, model) {
+    if (!make && !model) return '';
+    if (!make) return model;
+    if (!model) return make;
+    if (model.toUpperCase().startsWith(make.toUpperCase())) return model;
+    return make + ' ' + model;
+  }
+
+  function brandTitleCase(s) {
+    if (!s) return '';
+    const cleaned = s.replace(/\b(CORPORATION|IMAGING|COMPANY|CO\.?,?\s*LTD\.?)\b/gi, '').trim();
+    return cleaned.split(/\s+/).map(w => {
+      if (/^[A-Z]+$/.test(w) && w.length > 1) return w[0] + w.slice(1).toLowerCase();
+      return w;
+    }).join(' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function renderToCanvas(maxDim) {
+    if (!currentImage) return null;
+    const img = currentImage;
+    const aspect = aspectEl.value;
+    const borderPct = parseFloat(borderEl.value) / 100;
+    let srcW = img.naturalWidth, srcH = img.naturalHeight;
+    let cropW = srcW, cropH = srcH, cropX = 0, cropY = 0;
+    if (aspect !== 'native') {
+      const ratios = { 'square': 1, '4:5': 4 / 5, '3:2': 3 / 2 };
+      const target = ratios[aspect];
+      const currentR = srcW / srcH;
+      if (currentR > target) { cropW = Math.round(srcH * target); cropX = Math.round((srcW - cropW) / 2); }
+      else { cropH = Math.round(srcW / target); cropY = Math.round((srcH - cropH) / 2); }
+    }
+    const longEdge = Math.max(cropW, cropH);
+    const border = Math.round(longEdge * borderPct);
+    const footer = Math.round(longEdge * borderPct * 2.0);
+    const outW = cropW + border * 2;
+    const outH = cropH + border + footer;
+    const scale = Math.min(1, maxDim / Math.max(outW, outH));
+    const fW = Math.round(outW * scale);
+    const fH = Math.round(outH * scale);
+    const fBorder = border * scale;
+    const fFooter = footer * scale;
+    const fImgW = cropW * scale;
+    const fImgH = cropH * scale;
+    const canvas = document.createElement('canvas');
+    canvas.width = fW;
+    canvas.height = fH;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, fW, fH);
+    ctx.drawImage(img, cropX, cropY, cropW, cropH, fBorder, fBorder, fImgW, fImgH);
+    drawFooter(ctx, fW, fH, fBorder, fFooter, fImgH);
+    return canvas;
+  }
+
+  function render() {
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const previewMax = isMobile ? 1600 : 2400;
+    const canvas = renderToCanvas(previewMax);
+    if (!canvas) return;
+    stage.classList.remove('empty');
+    stage.innerHTML = '';
+    stage.appendChild(canvas);
+    updateReadout();
+  }
+
+  function drawFooter(ctx, W, H, border, footer, imgH) {
+    const m = currentMeta;
+    const fields = getEnabledFields();
+    const footerCenterY = border + imgH + footer / 2;
+    const showBrand = fields.brand && (m.make || m.model);
+    const showLens = fields.lens && m.lens;
+    const brand = showBrand ? brandTitleCase(formatBrand(m.make, m.model)) : '';
+    const lens = showLens ? brandTitleCase(m.lens) : '';
+    const techParts = [];
+    if (fields.focal && m.focal) techParts.push(Math.round(m.focal) + 'mm');
+    if (fields.aperture && m.fNum) techParts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
+    if (fields.shutter && m.exposure) techParts.push(formatShutter(m.exposure));
+    if (fields.iso && m.iso) techParts.push('ISO ' + m.iso);
+    if (fields.megapixels && m.megapixels) techParts.push(m.megapixels.toFixed(1) + 'MP');
+    if (fields.resolution && m.width && m.height) techParts.push(m.width + '×' + m.height);
+    const tech = techParts.join('  ·  ');
+    if (!brand && !lens && !tech) {
+      ctx.fillStyle = '#999999'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+      ctx.font = 'italic 400 ' + (footer * 0.22) + 'px "Fraunces", Georgia, serif';
+      ctx.fillText(m.hasAny ? 'No fields selected' : 'No EXIF metadata', W / 2, footerCenterY);
+      return;
+    }
+    const brandSize = footer * 0.22;
+    const subSize = footer * 0.12;
+    const techSize = footer * 0.16;
+    const padX = border * 1.2;
+    const gap = footer * 0.06;
+    ctx.font = '700 ' + brandSize + 'px Helvetica, "Helvetica Neue", Arial, sans-serif';
+    const brandWidth = brand ? ctx.measureText(brand).width : 0;
+    ctx.font = '400 ' + subSize + 'px "JetBrains Mono", monospace';
+    const lensWidth = lens ? ctx.measureText(lens).width : 0;
+    ctx.font = '500 ' + techSize + 'px "JetBrains Mono", monospace';
+    const techWidth = tech ? ctx.measureText(tech).width : 0;
+    const leftWidth = Math.max(brandWidth, lensWidth);
+    const horizontal = leftWidth + footer * 0.5 + techWidth + padX * 2 <= W;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#1a1a1a';
+    if (horizontal) {
+      const leftLines = [];
+      if (brand) leftLines.push({ text: brand, size: brandSize, font: '700 ' + brandSize + 'px Helvetica, "Helvetica Neue", Arial, sans-serif', color: '#1a1a1a' });
+      if (lens) leftLines.push({ text: lens, size: subSize, font: '400 ' + subSize + 'px "JetBrains Mono", monospace', color: '#888888' });
+      drawStack(ctx, leftLines, padX, footerCenterY, gap, 'left');
+      if (tech) {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = '500 ' + techSize + 'px "JetBrains Mono", monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(tech, W - padX, footerCenterY);
+      }
+    } else {
+      const lines = [];
+      if (brand) lines.push({ text: brand, size: brandSize, font: '700 ' + brandSize + 'px Helvetica, "Helvetica Neue", Arial, sans-serif', color: '#1a1a1a' });
+      if (lens)  lines.push({ text: lens, size: subSize, font: '400 ' + subSize + 'px "JetBrains Mono", monospace', color: '#888888' });
+      if (tech)  lines.push({ text: tech, size: techSize, font: '500 ' + techSize + 'px "JetBrains Mono", monospace', color: '#1a1a1a' });
+      drawStack(ctx, lines, W / 2, footerCenterY, gap, 'center');
+    }
+  }
+
+  function drawStack(ctx, lines, x, centerY, gap, align) {
+    if (!lines.length) return;
+    const totalHeight = lines.reduce((s, l) => s + l.size, 0) + gap * (lines.length - 1);
+    let y = centerY - totalHeight / 2;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'top';
+    for (const line of lines) {
+      ctx.fillStyle = line.color;
+      ctx.font = line.font;
+      ctx.fillText(line.text, x, y);
+      y += line.size + gap;
+    }
+    ctx.textBaseline = 'middle';
+  }
+
+  function updateReadout() {
+    const m = currentMeta;
+    const fields = getEnabledFields();
+    if (!m.hasAny) {
+      readout.innerHTML = '<b>No EXIF found.</b> The photo will be framed without specs.';
+      return;
+    }
+    const parts = [];
+    if (fields.brand) {
+      const brand = brandTitleCase(formatBrand(m.make, m.model));
+      if (brand) parts.push('<b>' + brand + '</b>');
+    }
+    if (fields.lens && m.lens) parts.push(brandTitleCase(m.lens));
+    if (fields.focal && m.focal) parts.push(Math.round(m.focal) + 'mm');
+    if (fields.aperture && m.fNum) parts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
+    if (fields.shutter && m.exposure) parts.push(formatShutter(m.exposure));
+    if (fields.iso && m.iso) parts.push('ISO ' + m.iso);
+    if (fields.megapixels && m.megapixels) parts.push(m.megapixels.toFixed(1) + 'MP');
+    if (fields.resolution && m.width && m.height) parts.push(m.width + '×' + m.height);
+    readout.innerHTML = parts.length ? parts.join('  ·  ') : '<b>No fields selected.</b>';
+  }
+
+  log('init complete');
+})();
+</script>
+</body>
+</html>
