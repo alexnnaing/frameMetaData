@@ -160,6 +160,50 @@ min-width: 36px;
 text-align: right;
 }
 
+.toggles {
+background: var(–paper);
+border: 1px solid var(–line);
+padding: 14px 16px;
+margin-bottom: 22px;
+}
+.toggles-label {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+text-transform: uppercase;
+letter-spacing: 0.18em;
+color: var(–muted);
+margin-bottom: 10px;
+}
+.chips {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+}
+.chip {
+position: relative;
+cursor: pointer;
+user-select: none;
+}
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip span {
+display: inline-block;
+padding: 7px 13px;
+border: 1px solid var(–line);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+text-transform: uppercase;
+letter-spacing: 0.12em;
+background: transparent;
+color: var(–muted);
+transition: all 0.15s;
+}
+.chip input:checked + span {
+background: var(–ink);
+color: var(–bg);
+border-color: var(–ink);
+}
+.chip:hover span { border-color: var(–accent); }
+
 .stage {
 background: var(–paper);
 border: 1px solid var(–line);
@@ -307,6 +351,20 @@ pointer-events: none;
 
   </div>
 
+  <div class="toggles">
+    <div class="toggles-label">Show in footer</div>
+    <div class="chips" id="chips">
+      <label class="chip"><input type="checkbox" data-field="brand" checked /><span>Camera</span></label>
+      <label class="chip"><input type="checkbox" data-field="lens" checked /><span>Lens</span></label>
+      <label class="chip"><input type="checkbox" data-field="focal" checked /><span>Focal</span></label>
+      <label class="chip"><input type="checkbox" data-field="aperture" checked /><span>Aperture</span></label>
+      <label class="chip"><input type="checkbox" data-field="shutter" checked /><span>Shutter</span></label>
+      <label class="chip"><input type="checkbox" data-field="iso" checked /><span>ISO</span></label>
+      <label class="chip"><input type="checkbox" data-field="megapixels" /><span>Megapixels</span></label>
+      <label class="chip"><input type="checkbox" data-field="resolution" /><span>Resolution</span></label>
+    </div>
+  </div>
+
   <div class="stage empty" id="stage">
     <div class="empty-mark">Your framed photo appears here</div>
     <div class="empty-sub">— upload to begin —</div>
@@ -353,6 +411,18 @@ pointer-events: none;
     if (currentImage) render();
   });
   aspectEl.addEventListener('change', () => { if (currentImage) render(); });
+
+  document.querySelectorAll('#chips input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', () => { if (currentImage) render(); });
+  });
+
+  function getEnabledFields() {
+    const fields = {};
+    document.querySelectorAll('#chips input[type="checkbox"]').forEach(cb => {
+      fields[cb.dataset.field] = cb.checked;
+    });
+    return fields;
+  }
 
   ['dragenter', 'dragover'].forEach(ev =>
     drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); })
@@ -516,7 +586,7 @@ pointer-events: none;
         Object.defineProperty(image, 'naturalHeight', { get: () => image.height });
       }
       const exif = await exifPromise;
-      currentMeta = parseMeta(exif || {});
+      currentMeta = parseMeta(exif || {}, image.naturalWidth, image.naturalHeight);
       render();
       downloadBtn.disabled = false;
       resetBtn.disabled = false;
@@ -528,7 +598,7 @@ pointer-events: none;
     }
   }
 
-  function parseMeta(exif) {
+  function parseMeta(exif, width, height) {
     const make = (exif.Make || '').trim();
     const model = (exif.Model || '').trim();
     const fNum = exif.FNumber || exif.ApertureValue;
@@ -538,9 +608,18 @@ pointer-events: none;
     const iso = exif.ISO || exif.ISOSpeedRatings || exif.PhotographicSensitivity;
     const lens = (exif.LensModel || '').trim();
 
+    // Prefer EXIF pixel dimensions when present (correct for orientation), fall
+    // back to the decoded image dimensions which are always available.
+    const exifW = exif.ExifImageWidth || exif.PixelXDimension || exif.ImageWidth;
+    const exifH = exif.ExifImageHeight || exif.PixelYDimension || exif.ImageHeight;
+    const w = width || exifW || 0;
+    const h = height || exifH || 0;
+    const megapixels = (w && h) ? (w * h) / 1_000_000 : 0;
+
     return {
       make, model, fNum, exposure, focal, focal35, iso, lens,
-      hasAny: !!(make || model || fNum || exposure || focal || iso)
+      width: w, height: h, megapixels,
+      hasAny: !!(make || model || fNum || exposure || focal || iso || w)
     };
   }
 
@@ -641,25 +720,30 @@ pointer-events: none;
 
   function drawFooter(ctx, W, H, border, footer, imgH) {
     const m = currentMeta;
+    const fields = getEnabledFields();
     const footerTop = border + imgH;
     const footerCenterY = footerTop + footer / 2;
 
-    const brand = brandTitleCase(formatBrand(m.make, m.model));
-    const lens = m.lens ? brandTitleCase(m.lens) : '';
+    const showBrand = fields.brand && (m.make || m.model);
+    const showLens = fields.lens && m.lens;
+    const brand = showBrand ? brandTitleCase(formatBrand(m.make, m.model)) : '';
+    const lens = showLens ? brandTitleCase(m.lens) : '';
 
     const techParts = [];
-    if (m.focal) techParts.push(Math.round(m.focal) + 'mm');
-    if (m.fNum) techParts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
-    if (m.exposure) techParts.push(formatShutter(m.exposure));
-    if (m.iso) techParts.push('ISO ' + m.iso);
+    if (fields.focal && m.focal) techParts.push(Math.round(m.focal) + 'mm');
+    if (fields.aperture && m.fNum) techParts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
+    if (fields.shutter && m.exposure) techParts.push(formatShutter(m.exposure));
+    if (fields.iso && m.iso) techParts.push('ISO ' + m.iso);
+    if (fields.megapixels && m.megapixels) techParts.push(m.megapixels.toFixed(1) + 'MP');
+    if (fields.resolution && m.width && m.height) techParts.push(m.width + '×' + m.height);
     const tech = techParts.join('  ·  ');
 
-    if (!brand && !tech && !m.hasAny) {
+    if (!brand && !lens && !tech) {
       ctx.fillStyle = '#999999';
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
       ctx.font = `italic 400 ${footer * 0.22}px "Fraunces", Georgia, serif`;
-      ctx.fillText('No EXIF metadata', W / 2, footerCenterY);
+      ctx.fillText(m.hasAny ? 'No fields selected' : 'No EXIF metadata', W / 2, footerCenterY);
       return;
     }
 
