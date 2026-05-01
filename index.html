@@ -305,8 +305,7 @@
     showToast('Rendering full size...');
     await new Promise(r => setTimeout(r, 50));
     try {
-      const nativeMax = Math.max(currentImage.naturalWidth, currentImage.naturalHeight) * 1.2;
-      const fullCanvas = renderToCanvas(Math.min(nativeMax, 8192));
+      const fullCanvas = renderToCanvas(Infinity);
       if (!fullCanvas) throw new Error('Render failed');
       fullCanvas.toBlob(blob => {
         if (!blob) {
@@ -317,14 +316,14 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = currentName.replace(/\.[^.]+$/, '') + '_framed.jpg';
+        a.download = currentName.replace(/\.[^.]+$/, '') + '_framed.png';
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
         showToast('Downloaded');
         downloadBtn.disabled = false;
-      }, 'image/jpeg', 0.95);
+      }, 'image/png');
     } catch (err) {
       showToast('Export failed: ' + (err.message || 'unknown'));
       downloadBtn.disabled = false;
