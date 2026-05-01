@@ -530,7 +530,7 @@
     if (!brand && !lens && !tech) {
       ctx.fillStyle = '#999999'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
       ctx.font = 'italic 400 ' + (footer * 0.22) + 'px "Fraunces", Georgia, serif';
-      ctx.fillText(m.hasAny ? 'No fields selected' : 'No EXIF metadata', W / 2, footerCenterY);
+      ctx.fillText(m.hasAny ? 'No fields selected' : 'No metadata found', W / 2, footerCenterY);
       return;
     }
     const brandSize = footer * 0.22;
@@ -587,7 +587,7 @@
     const m = currentMeta;
     const fields = getEnabledFields();
     if (!m.hasAny) {
-      readout.innerHTML = '<b>No EXIF found.</b> The photo will be framed without specs.';
+      readout.innerHTML = 'This file does not contain any metadata, please submit another image.';
       return;
     }
     const parts = [];
