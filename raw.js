@@ -18,16 +18,46 @@
   }
 
   async function extractRawPreview(file) {
+    const L = global.FrameLog || { info: () => {}, ok: () => {}, warn: () => {}, error: () => {} };
+
+    const e      = fileExt(file);
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    L.info('RAW · ' + file.name + ' — ' + e.toUpperCase() + ', ' + sizeMB + ' MB');
+    L.info('RAW · reading ArrayBuffer…');
+
     const buf = await file.arrayBuffer();
-    const e = fileExt(file);
+    L.info('RAW · buffer ready — ' + (buf.byteLength / 1024 / 1024).toFixed(1) + ' MB');
 
     let blob = null;
-    if (e === 'raf')                             blob = fromRaf(buf);
-    else if (e === 'cr3')                        blob = fromCr3(buf);
-    else /* cr2, nef, nrw, arw, sr2, srf, dng */ blob = fromTiff(buf);
+    let parser = '';
 
-    // Universal fallback: scan the raw bytes for a JPEG SOI/EOI pair
-    return blob || fromScan(buf);
+    if (e === 'raf') {
+      parser = 'RAF header';
+      L.info('RAW · trying RAF header parser');
+      blob = fromRaf(buf);
+    } else if (e === 'cr3') {
+      parser = 'CR3 ISOBMFF';
+      L.info('RAW · trying CR3 ISOBMFF parser');
+      blob = fromCr3(buf);
+    } else {
+      parser = 'TIFF IFD';
+      L.info('RAW · trying TIFF IFD parser (' + e.toUpperCase() + ')');
+      blob = fromTiff(buf);
+    }
+
+    if (blob) {
+      L.ok('RAW · ' + parser + ': preview extracted — ' + (blob.size / 1024).toFixed(0) + ' KB');
+    } else {
+      L.warn('RAW · ' + parser + ' parser returned null — falling back to byte scan');
+      blob = fromScan(buf);
+      if (blob) {
+        L.ok('RAW · scan fallback: found preview — ' + (blob.size / 1024).toFixed(0) + ' KB');
+      } else {
+        L.error('RAW · no embedded JPEG found in file');
+      }
+    }
+
+    return blob;
   }
 
   // ---------------------------------------------------------------------------

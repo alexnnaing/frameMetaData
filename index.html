@@ -97,6 +97,11 @@
     </div>
   </div>
 
+  <details class="debug-panel" id="debug-panel">
+    <summary id="debug-summary">Debug log (0 entries)</summary>
+    <div class="debug-list" id="debug-list"></div>
+  </details>
+
   <footer>
     <span>Reads EXIF locally — your photo never leaves your device</span>
     <span>v1.1</span>
@@ -105,6 +110,49 @@
 
 <div class="toast" id="toast">Saved</div>
 
+<script>
+/* FrameLog — must be defined before raw.js and app.js */
+window.FrameLog = (function () {
+  const queue = [];
+  let listEl = null, summaryEl = null;
+
+  function stamp() {
+    const d = new Date();
+    return d.toLocaleTimeString('en-US', { hour12: false }) +
+           '.' + String(d.getMilliseconds()).padStart(3, '0');
+  }
+
+  function write(level, msg, time) {
+    if (!listEl) return;
+    const el = document.createElement('div');
+    el.className = 'dlog-entry dlog-' + level;
+    el.textContent = '[' + time + ']  ' + msg;
+    listEl.appendChild(el);
+    listEl.scrollTop = listEl.scrollHeight;
+    const n = listEl.children.length;
+    if (summaryEl)
+      summaryEl.textContent = 'Debug log (' + n + (n === 1 ? ' entry' : ' entries') + ')';
+  }
+
+  function append(level, msg) {
+    const time = stamp();
+    if (!listEl) { queue.push({ level, msg, time }); return; }
+    write(level, msg, time);
+  }
+
+  return {
+    init() {
+      listEl     = document.getElementById('debug-list');
+      summaryEl  = document.getElementById('debug-summary');
+      while (queue.length) { const e = queue.shift(); write(e.level, e.msg, e.time); }
+    },
+    info:  msg => append('info',  String(msg)),
+    ok:    msg => append('ok',    String(msg)),
+    warn:  msg => append('warn',  String(msg)),
+    error: msg => append('error', String(msg)),
+  };
+})();
+</script>
 <script src="raw.js"></script>
 <script src="app.js"></script>
 </body>

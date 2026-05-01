@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  if (window.FrameLog) window.FrameLog.init();
+  const L = window.FrameLog || { info: () => {}, ok: () => {}, warn: () => {}, error: () => {} };
+
   const fileInput  = document.getElementById('file');
   const drop       = document.getElementById('drop');
   const dropLabel  = document.getElementById('dropLabel');
@@ -76,28 +79,34 @@
     if (!currentImage) return;
     downloadBtn.disabled = true;
     showToast('Rendering full size...');
+    L.info('Download: rendering at full native resolution…');
     await new Promise(r => setTimeout(r, 50));
     try {
       const fullCanvas = renderToCanvas(Infinity);
       if (!fullCanvas) throw new Error('Render failed');
+      L.info('Download: canvas ' + fullCanvas.width + '×' + fullCanvas.height + ' px — encoding PNG…');
       fullCanvas.toBlob(blob => {
         if (!blob) {
+          L.error('Download: toBlob returned null');
           showToast('Export failed — try smaller border');
           downloadBtn.disabled = false;
           return;
         }
+        const filename = currentName.replace(/\.[^.]+$/, '') + '_framed.png';
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = currentName.replace(/\.[^.]+$/, '') + '_framed.png';
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
+        L.ok('Download: ' + filename + ' (' + (blob.size / 1024 / 1024).toFixed(1) + ' MB)');
         showToast('Downloaded');
         downloadBtn.disabled = false;
       }, 'image/png');
     } catch (err) {
+      L.error('Download: ' + (err.message || 'unknown'));
       showToast('Export failed: ' + (err.message || 'unknown'));
       downloadBtn.disabled = false;
     }
@@ -163,30 +172,42 @@
     dropLabel.textContent = currentName.length > 38 ? currentName.slice(0, 35) + '...' : currentName;
     showToast('Loading...');
 
+    L.info('File: ' + file.name + ' (' + (file.type || 'no MIME type') + ', ' + (file.size / 1024 / 1024).toFixed(1) + ' MB)');
+
     // Start EXIF read immediately on the original file (parallel with decode)
+    L.info('EXIF: parsing…');
     const exifPromise = parseExifSafe(file);
     let imageBlob = file;
 
     if (isHeic(file)) {
+      L.info('Format: HEIC/HEIF — loading converter…');
       showToast('Converting HEIC...');
       try {
         const heic2any = await window.__loadHeic2any();
         const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
         imageBlob = Array.isArray(converted) ? converted[0] : converted;
+        L.ok('HEIC: converted — ' + (imageBlob.size / 1024).toFixed(0) + ' KB');
       } catch (err) {
+        L.error('HEIC: ' + err.message);
         showToast('HEIC failed: ' + (err.message || 'unknown'));
         return;
       }
     } else if (window.RawDecoder && window.RawDecoder.isRaw(file)) {
+      const rawExt = (file.name || '').split('.').pop().toUpperCase();
+      L.info('Format: RAW (' + rawExt + ') — extracting embedded JPEG preview…');
       showToast('Reading RAW preview...');
       try {
         const preview = await window.RawDecoder.extractRawPreview(file);
         if (!preview) throw new Error('No embedded preview found in RAW file');
         imageBlob = preview;
+        L.ok('RAW: preview ready — ' + (imageBlob.size / 1024).toFixed(0) + ' KB');
       } catch (err) {
+        L.error('RAW: ' + err.message);
         showToast('RAW failed: ' + (err.message || 'unknown'));
         return;
       }
+    } else {
+      L.info('Format: standard (' + (file.type || 'unknown') + ')');
     }
 
     try {
@@ -196,13 +217,30 @@
         Object.defineProperty(image, 'naturalWidth',  { get: () => image.width });
         Object.defineProperty(image, 'naturalHeight', { get: () => image.height });
       }
+      L.ok('Image decoded: ' + image.naturalWidth + '×' + image.naturalHeight + ' px');
+
       const exif = await exifPromise;
       currentMeta = parseMeta(exif || {}, image.naturalWidth, image.naturalHeight);
+
+      if (currentMeta.hasAny) {
+        const metaParts = [];
+        if (currentMeta.make || currentMeta.model) metaParts.push(brandTitleCase(formatBrand(currentMeta.make, currentMeta.model)));
+        if (currentMeta.lens)     metaParts.push(brandTitleCase(currentMeta.lens));
+        if (currentMeta.focal)    metaParts.push(Math.round(currentMeta.focal) + 'mm');
+        if (currentMeta.fNum)     metaParts.push('f/' + currentMeta.fNum.toFixed(1));
+        if (currentMeta.exposure) metaParts.push(formatShutter(currentMeta.exposure));
+        if (currentMeta.iso)      metaParts.push('ISO ' + currentMeta.iso);
+        L.ok('EXIF: ' + metaParts.join(' · '));
+      } else {
+        L.warn('EXIF: no metadata found in file');
+      }
+
       render(true);
       downloadBtn.disabled = false;
       resetBtn.disabled = false;
       showToast('Loaded');
     } catch (err) {
+      L.error('Decode: ' + err.message);
       showToast('Decode failed: ' + (err.message || 'unknown'));
     }
   }
@@ -308,6 +346,7 @@
     const previewMax = isMobile ? 1600 : 2400;
     const canvas = renderToCanvas(previewMax);
     if (!canvas) return;
+    L.info('Preview: ' + canvas.width + '×' + canvas.height + ' px (cap ' + previewMax + 'px)');
     stage.classList.remove('empty');
     stage.innerHTML = '';
     stage.appendChild(canvas);
@@ -319,7 +358,7 @@
 
   // ---- Footer drawing ----
 
-  function drawFooter(ctx, W, H, border, footer, imgH) {
+  function drawFooter(ctx, W, _H, border, footer, imgH) {
     const m      = currentMeta;
     const fields = getEnabledFields();
     const footerCenterY = border + imgH + footer / 2;
