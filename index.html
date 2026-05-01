@@ -91,9 +91,14 @@
     <div class="meta-readout" id="readout">
       <b>No metadata yet.</b> Camera, lens, and exposure data appear once a photo is loaded.
     </div>
-    <div style="display:flex; gap:10px;">
-      <button class="ghost" id="reset"    disabled>Reset</button>
-      <button              id="download" disabled>Download</button>
+    <div style="display:flex; gap:10px; align-items:stretch;">
+      <button class="ghost" id="reset" disabled>Reset</button>
+      <select id="dlFormat" class="dl-format">
+        <option value="png">PNG — Lossless</option>
+        <option value="jpeg-hq">JPEG — Max quality</option>
+        <option value="jpeg-sm">JPEG — Compressed</option>
+      </select>
+      <button id="download" disabled>Download</button>
     </div>
   </div>
 

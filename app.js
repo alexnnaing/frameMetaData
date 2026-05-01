@@ -73,18 +73,31 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // ---- Download (full native resolution, lossless PNG) ----
+  // ---- Download ----
+
+  const dlFormatEl = document.getElementById('dlFormat');
+
+  // Format definitions: [mimeType, quality (undefined = lossless), file suffix, label]
+  const DL_FORMATS = {
+    'png':     ['image/png',  undefined, '_framed.png',    'PNG lossless'],
+    'jpeg-hq': ['image/jpeg', 1.0,       '_framed_hq.jpg', 'JPEG max quality'],
+    'jpeg-sm': ['image/jpeg', 0.82,      '_framed.jpg',    'JPEG compressed'],
+  };
 
   downloadBtn.addEventListener('click', async () => {
     if (!currentImage) return;
     downloadBtn.disabled = true;
-    showToast('Rendering full size...');
-    L.info('Download: rendering at full native resolution…');
+
+    const fmt = dlFormatEl ? dlFormatEl.value : 'png';
+    const [mime, quality, suffix, label] = DL_FORMATS[fmt] || DL_FORMATS['png'];
+
+    showToast('Rendering...');
+    L.info('Download: ' + label + ' — rendering at full native resolution…');
     await new Promise(r => setTimeout(r, 50));
     try {
       const fullCanvas = renderToCanvas(Infinity);
       if (!fullCanvas) throw new Error('Render failed');
-      L.info('Download: canvas ' + fullCanvas.width + '×' + fullCanvas.height + ' px — encoding PNG…');
+      L.info('Download: canvas ' + fullCanvas.width + '×' + fullCanvas.height + ' px — encoding ' + mime + '…');
       fullCanvas.toBlob(blob => {
         if (!blob) {
           L.error('Download: toBlob returned null');
@@ -92,7 +105,7 @@
           downloadBtn.disabled = false;
           return;
         }
-        const filename = currentName.replace(/\.[^.]+$/, '') + '_framed.png';
+        const filename = currentName.replace(/\.[^.]+$/, '') + suffix;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -104,7 +117,7 @@
         L.ok('Download: ' + filename + ' (' + (blob.size / 1024 / 1024).toFixed(1) + ' MB)');
         showToast('Downloaded');
         downloadBtn.disabled = false;
-      }, 'image/png');
+      }, mime, quality);
     } catch (err) {
       L.error('Download: ' + (err.message || 'unknown'));
       showToast('Export failed: ' + (err.message || 'unknown'));
