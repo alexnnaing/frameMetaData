@@ -7,158 +7,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
+<link rel="stylesheet" href="styles.css">
+
+<!-- EXIF reading — full bundle for RAW (TIFF/NEF/ARW/RAF/DNG) support -->
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+
+<!-- Lazy-loaded HEIC converter -->
 <script>
   window.__loadHeic2any = function () {
     return new Promise((resolve, reject) => {
       if (window.heic2any) return resolve(window.heic2any);
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.js';
-      s.onload = () => resolve(window.heic2any);
+      s.onload  = () => resolve(window.heic2any);
       s.onerror = () => reject(new Error('Could not load HEIC converter'));
       document.head.appendChild(s);
     });
   };
 </script>
-<style>
-  :root {
-    --bg: #ece8e1;
-    --ink: #1a1a1a;
-    --muted: #6b6b6b;
-    --line: #1a1a1a;
-    --paper: #f6f3ec;
-    --accent: #c8472b;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    background: var(--bg); color: var(--ink);
-    font-family: 'Fraunces', Georgia, serif;
-    min-height: 100vh; -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 22px 80px; }
-  header {
-    display: flex; align-items: baseline; justify-content: space-between;
-    border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 28px;
-  }
-  .brand {
-    font-weight: 600; font-size: clamp(28px, 5vw, 44px);
-    letter-spacing: -0.02em; font-style: italic;
-  }
-  .brand span { font-style: normal; color: var(--accent); }
-  .tag {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
-  }
-  .controls { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 22px; }
-  @media (min-width: 720px) { .controls { grid-template-columns: 2fr 1fr 1fr; } }
-  .drop {
-    position: relative; border: 1.5px dashed var(--line); background: var(--paper);
-    padding: 22px; cursor: pointer; transition: background 0.2s, border-color 0.2s;
-    min-height: 110px; display: flex; align-items: center; gap: 16px;
-  }
-  .drop:hover, .drop.over { background: #fff; border-color: var(--accent); }
-  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  .drop-icon {
-    width: 56px; height: 56px; border: 1.5px solid var(--line);
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; flex-shrink: 0; font-size: 22px;
-  }
-  .drop-text { flex: 1; }
-  .drop-text strong { display: block; font-size: 19px; font-weight: 500; margin-bottom: 2px; }
-  .drop-text small {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    color: var(--muted); letter-spacing: 0.05em;
-  }
-  .field {
-    background: var(--paper); border: 1px solid var(--line); padding: 14px 16px;
-    display: flex; flex-direction: column; justify-content: center;
-  }
-  .field label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 6px;
-  }
-  .field select, .field input[type="range"] {
-    background: transparent; border: none; font-family: 'Fraunces', serif;
-    font-size: 17px; color: var(--ink); width: 100%; cursor: pointer;
-  }
-  .field select:focus, .field input:focus { outline: none; }
-  .range-row { display: flex; align-items: center; gap: 10px; }
-  .range-row span {
-    font-family: 'JetBrains Mono', monospace; font-size: 13px;
-    min-width: 36px; text-align: right;
-  }
-  .toggles {
-    background: var(--paper); border: 1px solid var(--line);
-    padding: 14px 16px; margin-bottom: 22px;
-  }
-  .toggles-label {
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 10px;
-  }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    position: relative; cursor: pointer; user-select: none;
-    -webkit-tap-highlight-color: transparent; display: inline-flex;
-  }
-  .chip input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
-  .chip span {
-    display: inline-block; padding: 9px 14px; border: 1px solid var(--line);
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    background: transparent; color: var(--muted);
-    transition: all 0.15s; pointer-events: none;
-  }
-  .chip input:checked + span { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .chip:active span { transform: scale(0.97); }
-  .stage {
-    background: var(--paper); border: 1px solid var(--line); padding: 28px;
-    min-height: 320px; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 22px; position: relative; scroll-margin-top: 20px;
-  }
-  .stage.empty { flex-direction: column; gap: 10px; color: var(--muted); }
-  .stage canvas {
-    max-width: 100%; max-height: 70vh; height: auto;
-    box-shadow: 0 18px 40px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
-  }
-  .empty-mark { font-style: italic; font-size: 22px; font-weight: 400; }
-  .empty-sub {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.18em;
-  }
-  .actions {
-    display: flex; gap: 12px; flex-wrap: wrap;
-    align-items: center; justify-content: space-between;
-  }
-  .meta-readout {
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    color: var(--muted); letter-spacing: 0.05em; line-height: 1.6;
-  }
-  .meta-readout b { color: var(--ink); font-weight: 600; }
-  button {
-    font-family: 'JetBrains Mono', monospace; font-size: 12px;
-    text-transform: uppercase; letter-spacing: 0.18em; padding: 14px 22px;
-    border: 1px solid var(--line); background: var(--ink); color: var(--bg);
-    cursor: pointer; transition: all 0.15s;
-  }
-  button:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.ghost { background: transparent; color: var(--ink); }
-  footer {
-    margin-top: 40px; border-top: 1px solid var(--line); padding-top: 14px;
-    font-family: 'JetBrains Mono', monospace; font-size: 10px;
-    text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
-    display: flex; justify-content: space-between;
-  }
-  .toast {
-    position: fixed; bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--ink); color: var(--bg); padding: 12px 22px;
-    font-family: 'JetBrains Mono', monospace; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.18em;
-    opacity: 0; transition: all 0.3s; pointer-events: none;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-</style>
 </head>
 <body>
 <div class="wrap">
@@ -169,11 +35,19 @@
 
   <div class="controls">
     <label class="drop" id="drop">
-      <input type="file" id="file" accept="image/*,.heic,.heif" />
+      <!--
+        Accept list covers:
+          Standard:  image/* (JPEG, PNG, WebP, …)
+          HEIC/HEIF: Apple Live Photos
+          RAW:       Fuji RAF · Canon CR2/CR3 · Nikon NEF/NRW
+                     Sony ARW/SR2/SRF · Apple/Adobe DNG
+      -->
+      <input type="file" id="file"
+        accept="image/*,.heic,.heif,.raf,.cr2,.cr3,.nef,.nrw,.arw,.sr2,.srf,.dng" />
       <div class="drop-icon">+</div>
       <div class="drop-text">
         <strong id="dropLabel">Upload a photo</strong>
-        <small>JPEG · PNG · HEIC · drag, drop, or tap</small>
+        <small>JPEG · PNG · HEIC · RAW (RAF, CR2/3, NEF, ARW, DNG) · drag, drop, or tap</small>
       </div>
     </label>
     <div class="field">
@@ -197,14 +71,14 @@
   <div class="toggles">
     <div class="toggles-label">Show in footer</div>
     <div class="chips" id="chips">
-      <label class="chip"><input type="checkbox" data-field="brand" checked /><span>Camera</span></label>
-      <label class="chip"><input type="checkbox" data-field="lens" checked /><span>Lens</span></label>
-      <label class="chip"><input type="checkbox" data-field="focal" checked /><span>Focal</span></label>
-      <label class="chip"><input type="checkbox" data-field="aperture" checked /><span>Aperture</span></label>
-      <label class="chip"><input type="checkbox" data-field="shutter" checked /><span>Shutter</span></label>
-      <label class="chip"><input type="checkbox" data-field="iso" checked /><span>ISO</span></label>
-      <label class="chip"><input type="checkbox" data-field="megapixels" /><span>Megapixels</span></label>
-      <label class="chip"><input type="checkbox" data-field="resolution" /><span>Resolution</span></label>
+      <label class="chip"><input type="checkbox" data-field="brand"      checked /><span>Camera</span></label>
+      <label class="chip"><input type="checkbox" data-field="lens"       checked /><span>Lens</span></label>
+      <label class="chip"><input type="checkbox" data-field="focal"      checked /><span>Focal</span></label>
+      <label class="chip"><input type="checkbox" data-field="aperture"   checked /><span>Aperture</span></label>
+      <label class="chip"><input type="checkbox" data-field="shutter"    checked /><span>Shutter</span></label>
+      <label class="chip"><input type="checkbox" data-field="iso"        checked /><span>ISO</span></label>
+      <label class="chip"><input type="checkbox" data-field="megapixels"         /><span>Megapixels</span></label>
+      <label class="chip"><input type="checkbox" data-field="resolution"         /><span>Resolution</span></label>
     </div>
   </div>
 
@@ -218,392 +92,20 @@
       <b>No metadata yet.</b> Camera, lens, and exposure data appear once a photo is loaded.
     </div>
     <div style="display:flex; gap:10px;">
-      <button class="ghost" id="reset" disabled>Reset</button>
-      <button id="download" disabled>Download</button>
+      <button class="ghost" id="reset"    disabled>Reset</button>
+      <button              id="download" disabled>Download</button>
     </div>
   </div>
 
   <footer>
     <span>Reads EXIF locally — your photo never leaves your device</span>
-    <span>v1.0</span>
+    <span>v1.1</span>
   </footer>
 </div>
 
 <div class="toast" id="toast">Saved</div>
 
-<script>
-(function () {
-  const fileInput = document.getElementById('file');
-  const drop = document.getElementById('drop');
-  const dropLabel = document.getElementById('dropLabel');
-  const stage = document.getElementById('stage');
-  const borderEl = document.getElementById('border');
-  const borderVal = document.getElementById('borderVal');
-  const aspectEl = document.getElementById('aspect');
-  const readout = document.getElementById('readout');
-  const downloadBtn = document.getElementById('download');
-  const resetBtn = document.getElementById('reset');
-  const toast = document.getElementById('toast');
-
-  let currentImage = null;
-  let currentMeta = null;
-  let currentName = 'photo';
-
-  borderEl.addEventListener('input', () => {
-    borderVal.textContent = borderEl.value + '%';
-    if (currentImage) render(false);
-  });
-  aspectEl.addEventListener('change', () => { if (currentImage) render(false); });
-
-  document.querySelectorAll('#chips input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', () => { if (currentImage) render(false); });
-  });
-
-  function getEnabledFields() {
-    const fields = {};
-    document.querySelectorAll('#chips input[type="checkbox"]').forEach(cb => {
-      fields[cb.dataset.field] = cb.checked;
-    });
-    return fields;
-  }
-
-  ['dragenter', 'dragover'].forEach(ev =>
-    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); })
-  );
-  ['dragleave', 'drop'].forEach(ev =>
-    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); })
-  );
-  drop.addEventListener('drop', e => {
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
-  drop.addEventListener('click', e => {
-    if (e.target !== fileInput) {
-      e.preventDefault();
-      fileInput.click();
-    }
-  });
-  fileInput.addEventListener('change', e => {
-    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
-  });
-
-  resetBtn.addEventListener('click', () => {
-    currentImage = null;
-    currentMeta = null;
-    fileInput.value = '';
-    dropLabel.textContent = 'Upload a photo';
-    stage.classList.add('empty');
-    stage.innerHTML = '<div class="empty-mark">Your framed photo appears here</div><div class="empty-sub">— upload to begin —</div>';
-    readout.innerHTML = '<b>No metadata yet.</b> Camera, lens, and exposure data appear once a photo is loaded.';
-    downloadBtn.disabled = true;
-    resetBtn.disabled = true;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-
-  downloadBtn.addEventListener('click', async () => {
-    if (!currentImage) return;
-    downloadBtn.disabled = true;
-    showToast('Rendering full size...');
-    await new Promise(r => setTimeout(r, 50));
-    try {
-      const fullCanvas = renderToCanvas(Infinity);
-      if (!fullCanvas) throw new Error('Render failed');
-      fullCanvas.toBlob(blob => {
-        if (!blob) {
-          showToast('Export failed — try smaller border');
-          downloadBtn.disabled = false;
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = currentName.replace(/\.[^.]+$/, '') + '_framed.png';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        showToast('Downloaded');
-        downloadBtn.disabled = false;
-      }, 'image/png');
-    } catch (err) {
-      showToast('Export failed: ' + (err.message || 'unknown'));
-      downloadBtn.disabled = false;
-    }
-  });
-
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 1600);
-  }
-
-  function loadImageFromBlob(blob) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(blob);
-      const img = new Image();
-      img.onload = () => {
-        if (img.naturalWidth === 0) { URL.revokeObjectURL(url); tryBitmap(); }
-        else { resolve({ image: img, cleanup: () => URL.revokeObjectURL(url) }); }
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); tryBitmap(); };
-      img.src = url;
-      function tryBitmap() {
-        if (typeof createImageBitmap !== 'function') {
-          return reject(new Error('Browser cannot decode this image'));
-        }
-        createImageBitmap(blob)
-          .then(bmp => resolve({ image: bmp, cleanup: () => bmp.close && bmp.close() }))
-          .catch(err => reject(err));
-      }
-    });
-  }
-
-  async function parseExifSafe(file) {
-    if (typeof window.exifr === 'undefined') return {};
-    try {
-      const parsePromise = window.exifr.parse(file, {
-        tiff: true, exif: true, ifd0: true, gps: false, xmp: false, icc: false
-      });
-      const timeout = new Promise(resolve => setTimeout(() => resolve(null), 6000));
-      const result = await Promise.race([parsePromise, timeout]);
-      return result || {};
-    } catch (e) { return {}; }
-  }
-
-  function isHeic(file) {
-    const name = (file.name || '').toLowerCase();
-    const type = (file.type || '').toLowerCase();
-    return name.endsWith('.heic') || name.endsWith('.heif') ||
-           type === 'image/heic' || type === 'image/heif';
-  }
-
-  async function handleFile(file) {
-    currentName = file.name || 'photo';
-    dropLabel.textContent = currentName.length > 38 ? currentName.slice(0, 35) + '...' : currentName;
-    showToast('Loading...');
-    const exifPromise = parseExifSafe(file);
-    let imageBlob = file;
-    if (isHeic(file)) {
-      showToast('Converting HEIC...');
-      try {
-        const heic2any = await window.__loadHeic2any();
-        const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
-        imageBlob = Array.isArray(converted) ? converted[0] : converted;
-      } catch (err) {
-        showToast('HEIC failed: ' + (err.message || 'unknown'));
-        return;
-      }
-    }
-    try {
-      const { image } = await loadImageFromBlob(imageBlob);
-      currentImage = image;
-      if (typeof image.naturalWidth === 'undefined') {
-        Object.defineProperty(image, 'naturalWidth', { get: () => image.width });
-        Object.defineProperty(image, 'naturalHeight', { get: () => image.height });
-      }
-      const exif = await exifPromise;
-      currentMeta = parseMeta(exif || {}, image.naturalWidth, image.naturalHeight);
-      render(true);
-      downloadBtn.disabled = false;
-      resetBtn.disabled = false;
-      showToast('Loaded');
-    } catch (err) {
-      showToast('Decode failed: ' + (err.message || 'unknown'));
-    }
-  }
-
-  function parseMeta(exif, width, height) {
-    const make = (exif.Make || '').trim();
-    const model = (exif.Model || '').trim();
-    const fNum = exif.FNumber || exif.ApertureValue;
-    const exposure = exif.ExposureTime;
-    const focal = exif.FocalLength;
-    const focal35 = exif.FocalLengthIn35mmFormat;
-    const iso = exif.ISO || exif.ISOSpeedRatings || exif.PhotographicSensitivity;
-    const lens = (exif.LensModel || '').trim();
-    const exifW = exif.ExifImageWidth || exif.PixelXDimension || exif.ImageWidth;
-    const exifH = exif.ExifImageHeight || exif.PixelYDimension || exif.ImageHeight;
-    const w = width || exifW || 0;
-    const h = height || exifH || 0;
-    const megapixels = (w && h) ? (w * h) / 1000000 : 0;
-    return {
-      make, model, fNum, exposure, focal, focal35, iso, lens,
-      width: w, height: h, megapixels,
-      hasAny: !!(make || model || fNum || exposure || focal || iso || lens)
-    };
-  }
-
-  function formatShutter(t) {
-    if (!t) return '';
-    if (t >= 1) return t + '"';
-    return '1/' + Math.round(1 / t);
-  }
-
-  function formatBrand(make, model) {
-    if (!make && !model) return '';
-    if (!make) return model;
-    if (!model) return make;
-    if (model.toUpperCase().startsWith(make.toUpperCase())) return model;
-    return make + ' ' + model;
-  }
-
-  function brandTitleCase(s) {
-    if (!s) return '';
-    const cleaned = s.replace(/\b(CORPORATION|IMAGING|COMPANY|CO\.?,?\s*LTD\.?)\b/gi, '').trim();
-    return cleaned.split(/\s+/).map(w => {
-      if (/^[A-Z]+$/.test(w) && w.length > 1) return w[0] + w.slice(1).toLowerCase();
-      return w;
-    }).join(' ').replace(/\s+/g, ' ').trim();
-  }
-
-  function renderToCanvas(maxDim) {
-    if (!currentImage) return null;
-    const img = currentImage;
-    const aspect = aspectEl.value;
-    const borderPct = parseFloat(borderEl.value) / 100;
-    let srcW = img.naturalWidth, srcH = img.naturalHeight;
-    let cropW = srcW, cropH = srcH, cropX = 0, cropY = 0;
-    if (aspect !== 'native') {
-      const ratios = { 'square': 1, '4:5': 4 / 5, '3:2': 3 / 2 };
-      const target = ratios[aspect];
-      const currentR = srcW / srcH;
-      if (currentR > target) { cropW = Math.round(srcH * target); cropX = Math.round((srcW - cropW) / 2); }
-      else { cropH = Math.round(srcW / target); cropY = Math.round((srcH - cropH) / 2); }
-    }
-    const longEdge = Math.max(cropW, cropH);
-    const border = Math.round(longEdge * borderPct);
-    const footer = Math.round(longEdge * borderPct * 2.0);
-    const outW = cropW + border * 2;
-    const outH = cropH + border + footer;
-    const scale = Math.min(1, maxDim / Math.max(outW, outH));
-    const fW = Math.round(outW * scale);
-    const fH = Math.round(outH * scale);
-    const fBorder = border * scale;
-    const fFooter = footer * scale;
-    const fImgW = cropW * scale;
-    const fImgH = cropH * scale;
-    const canvas = document.createElement('canvas');
-    canvas.width = fW;
-    canvas.height = fH;
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, fW, fH);
-    ctx.drawImage(img, cropX, cropY, cropW, cropH, fBorder, fBorder, fImgW, fImgH);
-    drawFooter(ctx, fW, fH, fBorder, fFooter, fImgH);
-    return canvas;
-  }
-
-  function render(scrollTo) {
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const previewMax = isMobile ? 1600 : 2400;
-    const canvas = renderToCanvas(previewMax);
-    if (!canvas) return;
-    stage.classList.remove('empty');
-    stage.innerHTML = '';
-    stage.appendChild(canvas);
-    updateReadout();
-    if (scrollTo) {
-      requestAnimationFrame(() => {
-        stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-  }
-
-  function drawFooter(ctx, W, H, border, footer, imgH) {
-    const m = currentMeta;
-    const fields = getEnabledFields();
-    const footerCenterY = border + imgH + footer / 2;
-    const showBrand = fields.brand && (m.make || m.model);
-    const showLens = fields.lens && m.lens;
-    const brand = showBrand ? brandTitleCase(formatBrand(m.make, m.model)) : '';
-    const lens = showLens ? brandTitleCase(m.lens) : '';
-    const techParts = [];
-    if (fields.focal && m.focal) techParts.push(Math.round(m.focal) + 'mm');
-    if (fields.aperture && m.fNum) techParts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
-    if (fields.shutter && m.exposure) techParts.push(formatShutter(m.exposure));
-    if (fields.iso && m.iso) techParts.push('ISO ' + m.iso);
-    if (fields.megapixels && m.megapixels) techParts.push(m.megapixels.toFixed(1) + 'MP');
-    if (fields.resolution && m.width && m.height) techParts.push(m.width + '×' + m.height);
-    const tech = techParts.join('  ·  ');
-    if (!brand && !lens && !tech) {
-      ctx.fillStyle = '#999999'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
-      ctx.font = 'italic 400 ' + (footer * 0.22) + 'px "Fraunces", Georgia, serif';
-      ctx.fillText(m.hasAny ? 'No fields selected' : 'No metadata found', W / 2, footerCenterY);
-      return;
-    }
-    const brandSize = footer * 0.22;
-    const subSize = footer * 0.12;
-    const techSize = footer * 0.16;
-    const padX = border * 1.2;
-    const gap = footer * 0.06;
-    ctx.font = '700 ' + brandSize + 'px Helvetica, "Helvetica Neue", Arial, sans-serif';
-    const brandWidth = brand ? ctx.measureText(brand).width : 0;
-    ctx.font = '400 ' + subSize + 'px "JetBrains Mono", monospace';
-    const lensWidth = lens ? ctx.measureText(lens).width : 0;
-    ctx.font = '500 ' + techSize + 'px "JetBrains Mono", monospace';
-    const techWidth = tech ? ctx.measureText(tech).width : 0;
-    const leftWidth = Math.max(brandWidth, lensWidth);
-    const horizontal = leftWidth + footer * 0.5 + techWidth + padX * 2 <= W;
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#1a1a1a';
-    if (horizontal) {
-      const leftLines = [];
-      if (brand) leftLines.push({ text: brand, size: brandSize, font: '700 ' + brandSize + 'px Helvetica, "Helvetica Neue", Arial, sans-serif', color: '#1a1a1a' });
-      if (lens) leftLines.push({ text: lens, size: subSize, font: '400 ' + subSize + 'px "JetBrains Mono", monospace', color: '#888888' });
-      drawStack(ctx, leftLines, padX, footerCenterY, gap, 'left');
-      if (tech) {
-        ctx.fillStyle = '#1a1a1a';
-        ctx.font = '500 ' + techSize + 'px "JetBrains Mono", monospace';
-        ctx.textAlign = 'right';
-        ctx.fillText(tech, W - padX, footerCenterY);
-      }
-    } else {
-      const lines = [];
-      if (brand) lines.push({ text: brand, size: brandSize, font: '700 ' + brandSize + 'px Helvetica, "Helvetica Neue", Arial, sans-serif', color: '#1a1a1a' });
-      if (lens)  lines.push({ text: lens, size: subSize, font: '400 ' + subSize + 'px "JetBrains Mono", monospace', color: '#888888' });
-      if (tech)  lines.push({ text: tech, size: techSize, font: '500 ' + techSize + 'px "JetBrains Mono", monospace', color: '#1a1a1a' });
-      drawStack(ctx, lines, W / 2, footerCenterY, gap, 'center');
-    }
-  }
-
-  function drawStack(ctx, lines, x, centerY, gap, align) {
-    if (!lines.length) return;
-    const totalHeight = lines.reduce((s, l) => s + l.size, 0) + gap * (lines.length - 1);
-    let y = centerY - totalHeight / 2;
-    ctx.textAlign = align;
-    ctx.textBaseline = 'top';
-    for (const line of lines) {
-      ctx.fillStyle = line.color;
-      ctx.font = line.font;
-      ctx.fillText(line.text, x, y);
-      y += line.size + gap;
-    }
-    ctx.textBaseline = 'middle';
-  }
-
-  function updateReadout() {
-    const m = currentMeta;
-    const fields = getEnabledFields();
-    if (!m.hasAny) {
-      readout.innerHTML = 'This file does not contain any metadata, please submit another image.';
-      return;
-    }
-    const parts = [];
-    if (fields.brand) {
-      const brand = brandTitleCase(formatBrand(m.make, m.model));
-      if (brand) parts.push('<b>' + brand + '</b>');
-    }
-    if (fields.lens && m.lens) parts.push(brandTitleCase(m.lens));
-    if (fields.focal && m.focal) parts.push(Math.round(m.focal) + 'mm');
-    if (fields.aperture && m.fNum) parts.push('f/' + (m.fNum < 10 ? m.fNum.toFixed(1) : Math.round(m.fNum)));
-    if (fields.shutter && m.exposure) parts.push(formatShutter(m.exposure));
-    if (fields.iso && m.iso) parts.push('ISO ' + m.iso);
-    if (fields.megapixels && m.megapixels) parts.push(m.megapixels.toFixed(1) + 'MP');
-    if (fields.resolution && m.width && m.height) parts.push(m.width + '×' + m.height);
-    readout.innerHTML = parts.length ? parts.join('  ·  ') : '<b>No fields selected.</b>';
-  }
-})();
-</script>
+<script src="raw.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
