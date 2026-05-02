@@ -103,7 +103,7 @@
   </div>
 
   <details class="debug-panel" id="debug-panel">
-    <summary id="debug-summary">Debug log (0 entries)<button class="copy-log-btn" id="copyLog" type="button">Copy log</button></summary>
+    <summary id="debug-summary"><span id="debug-summary-text">Debug log (0 entries)</span><button class="copy-log-btn" id="copyLog" type="button">Copy log</button></summary>
     <div class="debug-list" id="debug-list"></div>
   </details>
 
@@ -151,7 +151,7 @@ window.FrameLog = (function () {
   return {
     init() {
       listEl     = document.getElementById('debug-list');
-      summaryEl  = document.getElementById('debug-summary');
+      summaryEl  = document.getElementById('debug-summary-text');
       while (queue.length) { const e = queue.shift(); write(e.level, e.msg, e.time); }
     },
     info:  msg => append('info',  String(msg)),
