@@ -312,6 +312,37 @@ a.brand { text-decoration: none; color: inherit; }
 }
 .fb-thanks strong { color: var(--accent); }
 
+/* ---- Privacy policy page ---- */
+.privacy-body { display: flex; flex-direction: column; gap: 0; }
+.priv-section {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+.priv-section:last-child { border-bottom: none; }
+.priv-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--muted); margin-bottom: 10px;
+}
+.priv-section p {
+  font-size: 16px; line-height: 1.7; max-width: 720px;
+}
+.priv-table {
+  width: 100%; border-collapse: collapse; margin-top: 14px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+}
+.priv-table th {
+  text-align: left; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--muted); font-weight: 500; padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.priv-table td {
+  padding: 9px 12px 9px 0; vertical-align: top;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 40%, transparent);
+  line-height: 1.5; color: var(--ink);
+}
+.priv-table tr:last-child td { border-bottom: none; }
+
 /* ---- @formspree/ajax integration hooks ---- */
 
 /* Field-level error spans (data-fs-error="fieldname") */
