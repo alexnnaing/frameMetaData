@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Frame — Feedback & Bug Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a href="index.html" class="brand">Frame<span>.</span></a>
+    <div class="tag">Feedback & Bug Reports</div>
+  </header>
+
+  <div class="fb-intro">
+    <p class="fb-lead">Found a bug? Have a feature idea?</p>
+    <p class="fb-sub">For bugs, the debug log is the fastest way to diagnose what went wrong — see the guide below.</p>
+  </div>
+
+  <div class="guide-card">
+    <div class="guide-label">How to capture the debug log</div>
+    <ol class="guide-steps">
+      <li>
+        <span class="step-num">01</span>
+        <div class="step-body">
+          <strong>Load the problematic file</strong>
+          <span>Go to the <a href="index.html" class="inline-link">main page</a> and drop the file that's causing issues.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">02</span>
+        <div class="step-body">
+          <strong>Open the debug log</strong>
+          <span>Scroll to the bottom of the page and click <em>Debug log</em> to expand the panel.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">03</span>
+        <div class="step-body">
+          <strong>Copy all entries</strong>
+          <span>Click the <em>Copy log</em> button in the top-right of the debug panel. All timestamped entries are copied to your clipboard.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">04</span>
+        <div class="step-body">
+          <strong>Paste it below</strong>
+          <span>Fill out the form and paste the log into the <em>Debug log</em> field.</span>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <!-- Shown by @formspree/ajax when submission succeeds -->
+  <div class="fb-thanks" data-fs-success>
+    <strong>Received.</strong> Thank you for taking the time — I'll follow up if you left an email address.
+  </div>
+
+  <!-- Form-level error (network failure, Formspree rejection, etc.) -->
+  <div class="fb-form-error" data-fs-error></div>
+
+  <form class="fb-form" id="fb-form" action="https://formspree.io/f/xbdwlewg" method="POST">
+    <input type="hidden" name="_subject" value="Frame. — Feedback">
+    <!-- Honeypot anti-spam field -->
+    <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+
+    <div class="fb-row fb-row--2">
+      <div class="fb-field">
+        <label for="fb-type">Type <span class="fb-req">*</span></label>
+        <select id="fb-type" name="type" required data-fs-field>
+          <option value="">— Select —</option>
+          <option value="Bug report">Bug report</option>
+          <option value="Feature request">Feature request</option>
+          <option value="General feedback">General feedback</option>
+        </select>
+        <span data-fs-error="type"></span>
+      </div>
+      <div class="fb-field">
+        <label for="fb-title">Title <span class="fb-req">*</span></label>
+        <input type="text" id="fb-title" name="title" placeholder="One-line summary" required data-fs-field />
+        <span data-fs-error="title"></span>
+      </div>
+    </div>
+
+    <div class="fb-field">
+      <label for="fb-desc">Description <span class="fb-req">*</span></label>
+      <textarea id="fb-desc" name="description" rows="5" required data-fs-field
+        placeholder="What happened? What did you expect? For bugs: what file type, what browser, what went wrong?"></textarea>
+      <span data-fs-error="description"></span>
+    </div>
+
+    <div class="fb-field">
+      <label for="fb-log">Debug log <span class="fb-optional">(paste from Frame's debug panel — optional but very helpful for bugs)</span></label>
+      <textarea id="fb-log" name="debug_log" rows="7"
+        placeholder="[HH:MM:SS.mmm]  File: photo.jpg (image/jpeg, 4.2 MB)&#10;[HH:MM:SS.mmm]  EXIF: parsing…&#10;…paste here"></textarea>
+    </div>
+
+    <div class="fb-row fb-row--2">
+      <div class="fb-field">
+        <label for="fb-browser">Browser / OS <span class="fb-optional">(auto-filled)</span></label>
+        <input type="text" id="fb-browser" name="browser" readonly />
+      </div>
+      <div class="fb-field">
+        <label for="fb-email">Your email <span class="fb-optional">(optional, for follow-up)</span></label>
+        <input type="email" id="fb-email" name="email" placeholder="you@example.com" data-fs-field />
+        <span data-fs-error="email"></span>
+      </div>
+    </div>
+
+    <div class="fb-actions">
+      <button type="submit" data-fs-submit-btn>Send feedback</button>
+      <span class="fb-privacy">Delivered directly to the developer. Your email is never exposed in this page's source.</span>
+    </div>
+  </form>
+
+  <footer>
+    <a href="index.html" class="footer-link">← Back to Frame.</a>
+    <span>v1.1</span>
+  </footer>
+</div>
+
+<script>
+  // Auto-fill browser/OS before the form library initialises
+  (function () {
+    const el = document.getElementById('fb-browser');
+    if (el) el.value = navigator.userAgent;
+  })();
+
+  window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
+  formspree('initForm', { formElement: '#fb-form', formId: 'xbdwlewg' });
+</script>
+<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+</body>
+</html>

@@ -201,3 +201,136 @@ footer {
 .dlog-ok    { color: #2e8b2e; }
 .dlog-warn  { color: #8a6800; }
 .dlog-error { color: var(--accent); }
+
+/* ---- Copy-log button (inside debug summary) ---- */
+.copy-log-btn {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em;
+  padding: 3px 9px; border: 1px solid currentColor;
+  background: transparent; color: var(--muted);
+  cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.copy-log-btn:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* ---- Footer link ---- */
+.footer-link {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--muted); text-decoration: none;
+}
+.footer-link:hover { color: var(--ink); }
+
+/* ---- Brand as anchor (feedback page) ---- */
+a.brand { text-decoration: none; color: inherit; }
+
+/* ---- Feedback page ---- */
+.fb-intro { margin-bottom: 28px; }
+.fb-lead  { font-size: 22px; font-weight: 500; margin-bottom: 6px; }
+.fb-sub   {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); letter-spacing: 0.05em;
+}
+
+.guide-card {
+  background: var(--paper); border: 1px solid var(--line);
+  padding: 22px 24px 26px; margin-bottom: 32px;
+}
+.guide-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--muted); margin-bottom: 20px;
+}
+.guide-steps { list-style: none; display: flex; flex-direction: column; gap: 18px; }
+.guide-steps li { display: flex; gap: 20px; align-items: flex-start; }
+.step-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--accent); letter-spacing: 0.1em;
+  flex-shrink: 0; min-width: 22px; padding-top: 3px;
+}
+.step-body { display: flex; flex-direction: column; gap: 3px; }
+.step-body strong { font-size: 15px; font-weight: 500; }
+.step-body span {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); line-height: 1.6;
+}
+.step-body em { font-style: normal; color: var(--ink); }
+.inline-link { color: var(--accent); text-decoration: none; }
+.inline-link:hover { text-decoration: underline; }
+
+.fb-form { display: flex; flex-direction: column; gap: 20px; }
+.fb-row  { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 600px) { .fb-row--2 { grid-template-columns: 1fr 1fr; } }
+
+.fb-field { display: flex; flex-direction: column; gap: 7px; }
+.fb-field label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
+}
+.fb-req      { color: var(--accent); }
+.fb-optional { text-transform: none; letter-spacing: 0; font-size: 9px; }
+
+.fb-field input[type="text"],
+.fb-field input[type="email"],
+.fb-field select,
+.fb-field textarea {
+  background: var(--paper); border: 1px solid var(--line);
+  padding: 12px 14px; font-family: 'Fraunces', serif;
+  font-size: 15px; color: var(--ink); width: 100%;
+  transition: border-color 0.15s; appearance: none; -webkit-appearance: none;
+}
+.fb-field textarea {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; line-height: 1.7; resize: vertical;
+}
+.fb-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%231a1a1a'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 30px;
+}
+.fb-field input[readonly] {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--muted); cursor: default; padding: 14px;
+}
+.fb-field input:focus,
+.fb-field select:focus,
+.fb-field textarea:focus { outline: none; border-color: var(--accent); }
+
+.fb-error {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--accent); letter-spacing: 0.05em;
+}
+.fb-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 4px; }
+.fb-privacy {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--muted); letter-spacing: 0.03em;
+}
+
+.fb-thanks {
+  background: var(--paper); border: 1px solid var(--line);
+  padding: 32px; text-align: center; font-size: 18px;
+}
+.fb-thanks strong { color: var(--accent); }
+
+/* ---- @formspree/ajax integration hooks ---- */
+
+/* Field-level error spans (data-fs-error="fieldname") */
+[data-fs-error]:not(:empty) {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.05em;
+  color: var(--accent); margin-top: 4px;
+}
+[data-fs-error]:empty { display: none; }
+
+/* Form-level error block (data-fs-error with no value) */
+.fb-form-error:not(:empty) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.05em;
+  color: var(--accent); margin-bottom: 14px;
+}
+
+/* Invalid state set by the library via aria-invalid */
+.fb-field input[aria-invalid="true"],
+.fb-field select[aria-invalid="true"],
+.fb-field textarea[aria-invalid="true"] { border-color: var(--accent); }

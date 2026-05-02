@@ -125,6 +125,21 @@
     }
   });
 
+  // ---- Copy log ----
+
+  const copyLogBtn = document.getElementById('copyLog');
+  if (copyLogBtn) {
+    copyLogBtn.addEventListener('click', function (e) {
+      e.stopPropagation(); // prevent toggling the debug <details> panel
+      const listEl = document.getElementById('debug-list');
+      if (!listEl || !listEl.children.length) { showToast('Log is empty'); return; }
+      const text = Array.from(listEl.children).map(el => el.textContent).join('\n');
+      navigator.clipboard.writeText(text)
+        .then(() => showToast('Log copied'))
+        .catch(() => showToast('Copy failed'));
+    });
+  }
+
   // ---- Toast ----
 
   function showToast(msg) {
