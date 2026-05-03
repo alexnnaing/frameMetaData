@@ -20,13 +20,21 @@
   let currentMeta  = null;
   let currentName  = 'photo';
 
+  let currentCropOffset = { x: 0.5, y: 0.5 };
+  let renderInfo     = null;
+  let dragState      = null;
+  let dragRafPending = false;
+
   // ---- Controls ----
 
   borderEl.addEventListener('input', () => {
     borderVal.textContent = borderEl.value + '%';
     if (currentImage) render(false);
   });
-  aspectEl.addEventListener('change', () => { if (currentImage) render(false); });
+  aspectEl.addEventListener('change', () => {
+    currentCropOffset = { x: 0.5, y: 0.5 };
+    if (currentImage) render(false);
+  });
 
   document.querySelectorAll('#chips input[type="checkbox"]').forEach(cb => {
     cb.addEventListener('change', () => { if (currentImage) render(false); });
@@ -63,13 +71,18 @@
   resetBtn.addEventListener('click', () => {
     currentImage = null;
     currentMeta  = null;
+    currentCropOffset = { x: 0.5, y: 0.5 };
+    renderInfo = null;
     fileInput.value = '';
     dropLabel.textContent = 'Upload a photo';
+    stage.classList.remove('has-crop');
     stage.classList.add('empty');
     stage.innerHTML = '<div class="empty-mark">Your framed photo appears here</div><div class="empty-sub">— upload to begin —</div>';
     readout.innerHTML = '<b>No metadata yet.</b> Camera, lens, and exposure data appear once a photo is loaded.';
     downloadBtn.disabled = true;
     resetBtn.disabled = true;
+    const ch = document.getElementById('cropHint');
+    if (ch) ch.classList.remove('visible');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
@@ -263,6 +276,7 @@
         L.warn('EXIF: no metadata found in file');
       }
 
+      currentCropOffset = { x: 0.5, y: 0.5 };
       render(true);
       downloadBtn.disabled = false;
       resetBtn.disabled = false;
@@ -330,6 +344,8 @@
     let srcW = img.naturalWidth, srcH = img.naturalHeight;
     let cropW = srcW, cropH = srcH, cropX = 0, cropY = 0;
 
+    let cropAxis = null;
+
     if (aspect !== 'native') {
       const ratios  = {
         'square':  1,
@@ -343,14 +359,20 @@
         '1.91:1':  1.91,
         '2.39:1':  2.39,
       };
-      const target  = ratios[aspect];
-      const currentR = srcW / srcH;
-      if (currentR > target) {
-        cropW = Math.round(srcH * target);
-        cropX = Math.round((srcW - cropW) / 2);
-      } else {
-        cropH = Math.round(srcW / target);
-        cropY = Math.round((srcH - cropH) / 2);
+      const target = ratios[aspect];
+      if (target !== undefined) {
+        const currentR = srcW / srcH;
+        if (currentR > target) {
+          cropW = Math.round(srcH * target);
+          const maxX = srcW - cropW;
+          cropX = Math.round(currentCropOffset.x * maxX);
+          cropAxis = 'x';
+        } else if (currentR < target) {
+          cropH = Math.round(srcW / target);
+          const maxY = srcH - cropH;
+          cropY = Math.round(currentCropOffset.y * maxY);
+          cropAxis = 'y';
+        }
       }
     }
 
@@ -377,6 +399,7 @@
     ctx.fillRect(0, 0, fW, fH);
     ctx.drawImage(img, cropX, cropY, cropW, cropH, fBorder, fBorder, fImgW, fImgH);
     drawFooter(ctx, fW, fH, fBorder, fFooter, fImgH);
+    if (maxDim !== Infinity) renderInfo = { scale, srcW, srcH, cropW, cropH, cropAxis };
     return canvas;
   }
 
@@ -389,11 +412,56 @@
     stage.classList.remove('empty');
     stage.innerHTML = '';
     stage.appendChild(canvas);
+    updateCropHint();
     updateReadout();
     if (scrollTo) {
       requestAnimationFrame(() => stage.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     }
   }
+
+  // ---- Crop drag ----
+
+  const cropHintEl = document.getElementById('cropHint');
+
+  function updateCropHint() {
+    const active = !!(currentImage && renderInfo && renderInfo.cropAxis);
+    stage.classList.toggle('has-crop', active);
+    if (cropHintEl) cropHintEl.classList.toggle('visible', active);
+  }
+
+  stage.addEventListener('pointerdown', e => {
+    if (!currentImage || !renderInfo || !renderInfo.cropAxis) return;
+    e.preventDefault();
+    stage.setPointerCapture(e.pointerId);
+    dragState = { startX: e.clientX, startY: e.clientY, ox: currentCropOffset.x, oy: currentCropOffset.y };
+    stage.classList.add('dragging');
+  });
+
+  stage.addEventListener('pointermove', e => {
+    if (!dragState || !renderInfo) return;
+    e.preventDefault();
+    const canvas = stage.querySelector('canvas');
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const srcPerCSS = canvas.width / (rect.width * renderInfo.scale);
+    const srcDx = (e.clientX - dragState.startX) * srcPerCSS;
+    const srcDy = (e.clientY - dragState.startY) * srcPerCSS;
+    if (renderInfo.cropAxis === 'x') {
+      const maxX = renderInfo.srcW - renderInfo.cropW;
+      if (maxX > 0) currentCropOffset.x = Math.max(0, Math.min(1, dragState.ox - srcDx / maxX));
+    } else if (renderInfo.cropAxis === 'y') {
+      const maxY = renderInfo.srcH - renderInfo.cropH;
+      if (maxY > 0) currentCropOffset.y = Math.max(0, Math.min(1, dragState.oy - srcDy / maxY));
+    }
+    if (!dragRafPending) {
+      dragRafPending = true;
+      requestAnimationFrame(() => { render(false); dragRafPending = false; });
+    }
+  });
+
+  ['pointerup', 'pointercancel'].forEach(ev =>
+    stage.addEventListener(ev, () => { if (dragState) { dragState = null; stage.classList.remove('dragging'); } })
+  );
 
   // ---- Footer drawing ----
 
