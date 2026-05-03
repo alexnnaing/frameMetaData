@@ -21,7 +21,14 @@ header {
   font-weight: 600; font-size: clamp(28px, 5vw, 44px);
   letter-spacing: -0.02em; font-style: italic;
 }
-.brand span { font-style: normal; color: var(--accent); }
+.brand .brand-dot { font-style: normal; color: var(--accent); }
+.brand-by {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-style: normal; font-weight: 400;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); margin-left: 11px;
+  vertical-align: middle;
+}
 .tag {
   font-family: 'JetBrains Mono', monospace; font-size: 11px;
   text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
