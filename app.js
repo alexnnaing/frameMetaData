@@ -331,7 +331,18 @@
     let cropW = srcW, cropH = srcH, cropX = 0, cropY = 0;
 
     if (aspect !== 'native') {
-      const ratios  = { 'square': 1, '4:5': 4 / 5, '3:2': 3 / 2 };
+      const ratios  = {
+        'square':  1,
+        '1:1':     1,
+        '4:5':     4 / 5,
+        '3:2':     3 / 2,
+        '4:3':     4 / 3,
+        '2:3':     2 / 3,
+        '16:9':    16 / 9,
+        '9:16':    9 / 16,
+        '1.91:1':  1.91,
+        '2.39:1':  2.39,
+      };
       const target  = ratios[aspect];
       const currentR = srcW / srcH;
       if (currentR > target) {
