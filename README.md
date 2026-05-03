@@ -80,4 +80,4 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ---
 
-**Frame.** &nbsp;·&nbsp; v1.6 &nbsp;·&nbsp; Author: [alexnaing](https://github.com/alexnnaing)
+**EXIFrame.** &nbsp;·&nbsp; v1.6 &nbsp;·&nbsp; Author: [alexnaing](https://github.com/alexnnaing)
