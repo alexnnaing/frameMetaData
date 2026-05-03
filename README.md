@@ -84,7 +84,7 @@ Click **Copy log** to copy all entries to the clipboard. Use it to diagnose why 
 | `index.html` | Main app |
 | `feedback.html` | Bug reports and feature requests (Formspree-powered form) |
 | `privacy.html` | Privacy policy, including GitHub Pages hosting disclosure |
-| `license.html` | MIT license and third-party dependency licences |
+| `legal.html` | MIT license and third-party dependency licences |
 
 ## File Structure
 
@@ -95,7 +95,7 @@ app.js          application logic
 raw.js          RAW format preview extractor (RAF, CR2/3, NEF, ARW, DNG)
 feedback.html   feedback & bug report form
 privacy.html    privacy policy
-license.html    MIT license
+legal.html      MIT license
 ```
 
 ## Dependencies (CDN, no install needed)
