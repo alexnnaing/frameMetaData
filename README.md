@@ -27,7 +27,7 @@ RAW files are handled by extracting the embedded JPEG preview that cameras write
 
 ## Usage
 
-1. Open `index.html` in any modern browser (Chrome, Firefox, Safari, Edge)
+1. Open [this link](https://alexnnaing.github.io/frameMetaData/) in any modern browser (Chrome, Firefox, Safari, Edge)
 2. Drop a photo onto the upload area, or click to browse
 3. Adjust border width and aspect ratio as needed
 4. Toggle which EXIF fields appear in the footer
