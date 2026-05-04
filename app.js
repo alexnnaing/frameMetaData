@@ -26,6 +26,7 @@
   let renderInfo     = null;
   let dragState      = null;
   let dragRafPending = false;
+  let textScale      = 1;
 
   // ---- Controls ----
 
@@ -33,10 +34,13 @@
     borderVal.textContent = borderEl.value + '%';
     if (currentImage) render(false);
   });
-  if (textSizeEl) textSizeEl.addEventListener('input', () => {
-    textSizeValEl.textContent = textSizeEl.value + '%';
-    if (currentImage) render(false);
-  });
+  if (textSizeEl) {
+    textSizeEl.addEventListener('input', () => {
+      textScale = parseFloat(textSizeEl.value) / 100;
+      if (textSizeValEl) textSizeValEl.textContent = textSizeEl.value + '%';
+      if (currentImage) render(false);
+    });
+  }
   aspectEl.addEventListener('change', () => {
     currentCropOffset = { x: 0.5, y: 0.5 };
     if (currentImage) render(false);
@@ -507,7 +511,6 @@
       return;
     }
 
-    const textScale = textSizeEl ? parseFloat(textSizeEl.value) / 100 : 1;
     const brandSize = footer * 0.22 * textScale;
     const subSize   = footer * 0.12 * textScale;
     const techSize  = footer * 0.16 * textScale;
