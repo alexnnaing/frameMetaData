@@ -298,16 +298,25 @@
     const focal35  = exif.FocalLengthIn35mmFormat;
     const iso      = exif.ISO || exif.ISOSpeedRatings || exif.PhotographicSensitivity;
     const lens     = (exif.LensModel || '').trim();
+    const date     = exif.DateTimeOriginal || exif.DateTime || exif.CreateDate || null;
     const exifW    = exif.ExifImageWidth  || exif.PixelXDimension || exif.ImageWidth;
     const exifH    = exif.ExifImageHeight || exif.PixelYDimension || exif.ImageHeight;
     const w = width  || exifW || 0;
     const h = height || exifH || 0;
     const megapixels = (w && h) ? (w * h) / 1000000 : 0;
     return {
-      make, model, fNum, exposure, focal, focal35, iso, lens,
+      make, model, fNum, exposure, focal, focal35, iso, lens, date,
       width: w, height: h, megapixels,
-      hasAny: !!(make || model || fNum || exposure || focal || iso || lens)
+      hasAny: !!(make || model || fNum || exposure || focal || iso || lens || date)
     };
+  }
+
+  function formatDate(dt) {
+    if (!dt) return '';
+    const d = dt instanceof Date ? dt : new Date(String(dt).replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3'));
+    if (isNaN(d.getTime())) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
   }
 
   function formatShutter(t) {
@@ -482,6 +491,7 @@
     if (fields.iso        && m.iso)       techParts.push('ISO ' + m.iso);
     if (fields.megapixels && m.megapixels) techParts.push(m.megapixels.toFixed(1) + 'MP');
     if (fields.resolution && m.width && m.height) techParts.push(m.width + '×' + m.height);
+    if (fields.date       && m.date)       techParts.push(formatDate(m.date));
     const tech = techParts.join('  ·  ');
 
     if (!brand && !lens && !tech) {
@@ -563,6 +573,7 @@
     if (fields.iso       && m.iso)              parts.push('ISO ' + m.iso);
     if (fields.megapixels && m.megapixels)      parts.push(m.megapixels.toFixed(1) + 'MP');
     if (fields.resolution && m.width && m.height) parts.push(m.width + '×' + m.height);
+    if (fields.date       && m.date)             parts.push(formatDate(m.date));
     readout.innerHTML = parts.length ? parts.join('  ·  ') : '<b>No fields selected.</b>';
   }
 
