@@ -79,6 +79,20 @@ header {
   font-family: 'JetBrains Mono', monospace; font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 10px;
 }
+.toggles-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.18em; color: var(--muted);
+}
+.text-size-wrap {
+  display: flex; align-items: center; gap: 8px; cursor: default;
+}
+.text-size-wrap input[type="range"] { width: 72px; cursor: pointer; }
+.text-size-wrap span {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.1em; min-width: 34px;
+}
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
   position: relative; cursor: pointer; user-select: none;

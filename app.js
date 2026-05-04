@@ -12,9 +12,11 @@
   const borderVal  = document.getElementById('borderVal');
   const aspectEl   = document.getElementById('aspect');
   const readout    = document.getElementById('readout');
-  const downloadBtn = document.getElementById('download');
-  const resetBtn   = document.getElementById('reset');
-  const toast      = document.getElementById('toast');
+  const downloadBtn  = document.getElementById('download');
+  const resetBtn     = document.getElementById('reset');
+  const toast        = document.getElementById('toast');
+  const textSizeEl   = document.getElementById('textSize');
+  const textSizeValEl = document.getElementById('textSizeVal');
 
   let currentImage = null;
   let currentMeta  = null;
@@ -29,6 +31,10 @@
 
   borderEl.addEventListener('input', () => {
     borderVal.textContent = borderEl.value + '%';
+    if (currentImage) render(false);
+  });
+  if (textSizeEl) textSizeEl.addEventListener('input', () => {
+    textSizeValEl.textContent = textSizeEl.value + '%';
     if (currentImage) render(false);
   });
   aspectEl.addEventListener('change', () => {
@@ -501,9 +507,10 @@
       return;
     }
 
-    const brandSize = footer * 0.22;
-    const subSize   = footer * 0.12;
-    const techSize  = footer * 0.16;
+    const textScale = textSizeEl ? parseFloat(textSizeEl.value) / 100 : 1;
+    const brandSize = footer * 0.22 * textScale;
+    const subSize   = footer * 0.12 * textScale;
+    const techSize  = footer * 0.16 * textScale;
     const padX      = border * 1.2;
     const gap       = footer * 0.06;
 

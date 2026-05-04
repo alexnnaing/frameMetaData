@@ -84,7 +84,14 @@
   </div>
 
   <div class="toggles">
-    <div class="toggles-label">Show in footer</div>
+    <div class="toggles-header">
+      <span>Show in footer</span>
+      <label class="text-size-wrap">
+        Text size
+        <input type="range" id="textSize" min="60" max="130" step="5" value="100" />
+        <span id="textSizeVal">100%</span>
+      </label>
+    </div>
     <div class="chips" id="chips">
       <label class="chip"><input type="checkbox" data-field="brand"      checked /><span>Camera</span></label>
       <label class="chip"><input type="checkbox" data-field="lens"       checked /><span>Lens</span></label>
